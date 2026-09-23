@@ -6,76 +6,101 @@
     <title>Kyublox Platform</title>
     <style>
         * { touch-action: manipulation; user-select: none; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { margin: 0; overflow: hidden; background-color: #111; color: white; }
+        body { margin: 0; overflow: hidden; background-color: #f4f6f9; color: #333; }
         canvas { display: none; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* UI SCREENS */
-        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 10; background: #1a1a2e; overflow-y: auto; padding: 20px; }
+        /* UI SCREENS (LIGHT THEME) */
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 10; background: #f4f6f9; overflow-y: auto; padding: 20px; }
         .active-screen { display: block; }
         
-        h1, h2, h3 { color: #00ffcc; text-shadow: 0 2px 4px rgba(0,0,0,0.5); text-align: center; }
-        .panel { background: rgba(0,0,0,0.5); padding: 20px; border-radius: 12px; margin: 10px auto; max-width: 500px; border: 1px solid #333; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: none; outline: none; font-size: 16px; }
-        input, select { background: #0f0f1a; color: white; border: 1px solid #444; }
-        button { background: #00ffcc; color: #000; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #00ccaa; }
-        button.danger { background: #ff4444; color: white; }
+        h1, h2, h3 { color: #0055ff; text-align: center; margin-top: 0; }
+        .panel { background: #ffffff; padding: 25px; border-radius: 12px; margin: 10px auto; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
+        
+        /* AUTH SPLIT */
+        .auth-container { display: flex; flex-wrap: wrap; gap: 20px; max-width: 800px; margin: 0 auto; justify-content: center; }
+        .auth-box { flex: 1; min-width: 300px; }
+
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; outline: none; font-size: 16px; background: #fff; color: #333; }
+        input:focus, select:focus { border-color: #0055ff; }
+        button { background: #0055ff; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; border: none; }
+        button:hover { background: #0044cc; }
+        button.danger { background: #ff4444; } button.danger:hover { background: #cc0000; }
         
         /* HUB LAYOUT */
         #hub-layout { display: flex; flex-wrap: wrap; gap: 20px; max-width: 1000px; margin: 0 auto; }
         .col { flex: 1; min-width: 300px; }
-        .list-item { display: flex; justify-content: space-between; background: #222; padding: 10px; margin-bottom: 5px; border-radius: 6px; align-items: center; cursor: pointer; }
-        .list-item:hover { background: #333; }
-        .game-card { background: #2a2a40; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; cursor: pointer; border: 2px solid transparent; }
-        .game-card:hover { border-color: #00ffcc; }
+        .list-item { display: flex; justify-content: space-between; background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 6px; align-items: center; border: 1px solid #eee; }
+        
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .game-card { background: #fff; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; border: 2px solid #e1e4e8; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .game-card:hover { border-color: #0055ff; transform: translateY(-2px); }
+        .game-card h3 { color: #333; margin-bottom: 5px; } .game-card p { font-size: 13px; color: #666; margin: 0; }
 
-        /* CHARACTER CUSTOMIZATION */
-        .color-picker-row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
-        .color-picker-row input[type="color"] { width: 50px; height: 50px; padding: 0; cursor: pointer; }
+        /* CUSTOMIZATION */
+        .color-picker-row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-weight: bold; }
+        .color-picker-row input[type="color"] { width: 50px; height: 50px; padding: 0; cursor: pointer; border: none; }
         .face-grid { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
-        .face-btn { width: 60px; height: 60px; background: #fff; border: 3px solid transparent; border-radius: 8px; cursor: pointer; background-size: cover; }
-        .face-btn.selected { border-color: #00ffcc; }
+        .face-btn { width: 60px; height: 60px; background: #eee; border: 3px solid transparent; border-radius: 8px; cursor: pointer; background-size: cover; }
+        .face-btn.selected { border-color: #0055ff; }
 
-        /* GAME UI (OVERLAYS CANVAS) */
+        /* GAME UI OVERLAY */
         #game-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; display: none; }
-        #leave-btn { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 120px; padding: 8px; pointer-events: auto; }
+        #leave-btn { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 120px; padding: 8px; pointer-events: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         
         #chat-container { position: absolute; top: 20px; left: 20px; width: 280px; height: 150px; display: flex; flex-direction: column; pointer-events: auto; }
-        #chat-messages { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px 8px 0 0; font-size: 13px; }
-        #chat-input { margin: 0; border-radius: 0 0 8px 8px; padding: 8px; font-size: 13px; background: rgba(0,0,0,0.8); }
+        #chat-messages { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.5); color: white; padding: 8px; border-radius: 8px 8px 0 0; font-size: 13px; text-shadow: 1px 1px 0 #000; }
+        #chat-input { margin: 0; border-radius: 0 0 8px 8px; padding: 8px; font-size: 13px; background: rgba(0,0,0,0.8); color: white; border: none; }
         
-        #mp-status { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; pointer-events: auto; }
+        #mp-status { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); color: white; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; pointer-events: auto; }
 
         /* MOBILE CONTROLS */
         #joystick-zone { position: absolute; bottom: 35px; left: 35px; width: 130px; height: 130px; background: rgba(255,255,255,0.15); border-radius: 50%; pointer-events: auto; display: none; }
         #joystick-knob { position: absolute; top: 40px; left: 40px; width: 50px; height: 50px; background: rgba(255,255,255,0.8); border-radius: 50%; pointer-events: none; }
         #jump-btn { position: absolute; bottom: 45px; right: 35px; width: 85px; height: 85px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; color: white; font-weight: bold; display: none; align-items: center; justify-content: center; pointer-events: auto; z-index: 15; }
-        #camera-drag-zone { position: absolute; top: 0; right: 0; width: 50%; height: 100%; pointer-events: auto; display: none; z-index: 5; } /* Right half screen drag */
+        #camera-drag-zone { position: absolute; top: 0; right: 0; width: 50%; height: 100%; pointer-events: auto; display: none; z-index: 5; }
 
-        @media (hover: none) and (pointer: coarse) {
+        @media (hover: none) and (pointer: coarse), (max-width: 1024px) {
             #joystick-zone, #jump-btn, #camera-drag-zone { display: flex !important; display: block !important; }
             #chat-container { top: 70px; width: 200px; height: 120px; }
             #mp-status { top: 70px; }
+            .game-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
+<!-- AUDIO ASSETS -->
+<audio id="snd-bgm" src="ROBLOX - Sword Fights on the Heights Theme Song.mp3" loop></audio>
+<audio id="snd-jump" src="roblox-classic-jump.mp3"></audio>
+<audio id="snd-walk" src="roblox-classic-footsteps.mp3" loop></audio>
+<audio id="snd-death" src="roblox-death-sound-old.mp3"></audio>
+
 <!-- AUTH SCREEN -->
 <div id="auth-screen" class="screen active-screen">
     <h1>Welcome to Kyublox</h1>
-    <div class="panel">
-        <h2>Login or Create Account</h2>
-        <input type="text" id="auth-user" placeholder="Username (e.g. OwnerofKyublox)">
-        <input type="password" id="auth-pass" placeholder="Password">
-        <select id="auth-gender">
-            <option value="Unspecified">Select Gender (For Sign up)</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-        </select>
-        <button onclick="handleAuth()">Enter Kyublox</button>
-        <p id="auth-error" style="color: #ff4444; font-size: 13px; text-align: center;"></p>
+    <div class="auth-container">
+        <!-- LOG IN -->
+        <div class="panel auth-box">
+            <h2>Log In</h2>
+            <input type="text" id="login-user" placeholder="Username">
+            <input type="password" id="login-pass" placeholder="Password">
+            <button onclick="login()">Log In</button>
+            <p id="login-error" style="color: red; font-size: 13px; text-align: center;"></p>
+        </div>
+        <!-- SIGN UP -->
+        <div class="panel auth-box">
+            <h2>Sign Up</h2>
+            <input type="text" id="signup-user" placeholder="Choose Username">
+            <input type="password" id="signup-pass" placeholder="Choose Password">
+            <select id="signup-gender">
+                <option value="Unspecified">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+            <button onclick="signup()">Create Account</button>
+            <p id="signup-error" style="color: red; font-size: 13px; text-align: center;"></p>
+        </div>
     </div>
 </div>
 
@@ -84,29 +109,35 @@
     <h1>Kyublox Hub</h1>
     <h3 id="hub-welcome"></h3>
     <div style="text-align: center; margin-bottom: 20px;">
-        <button style="width: auto; padding: 10px 20px;" onclick="showScreen('customize-screen')">Customize Avatar</button>
+        <button style="width: auto; padding: 10px 20px;" onclick="openCustomize()">Customize Avatar</button>
         <button style="width: auto; padding: 10px 20px;" class="danger" onclick="logout()">Logout</button>
     </div>
 
     <div id="hub-layout">
-        <!-- Games -->
         <div class="col panel">
             <h2>Games</h2>
-            <div class="game-card" onclick="joinGame('baseplate')">
-                <h3>Empty Baseplate</h3>
-                <p>A blank canvas to hang out.</p>
-            </div>
-            <div class="game-card" onclick="joinGame('obby')">
-                <h3>Classic Obby</h3>
-                <p>Jump to the end without falling!</p>
+            <div class="game-grid">
+                <div class="game-card" onclick="joinGame('baseplate')">
+                    <h3>Empty Baseplate</h3><p>A blank canvas.</p>
+                </div>
+                <div class="game-card" onclick="joinGame('obby')">
+                    <h3>Classic Obby</h3><p>Jump to the end!</p>
+                </div>
+                <div class="game-card" style="border-color:#ffaa00;" onclick="joinGame('sfoth')">
+                    <h3>SFOTH</h3><p>Sword Fights on the Heights!</p>
+                </div>
+                <div class="game-card" onclick="joinGame('neighborhood')">
+                    <h3>Neighborhood</h3><p>Explore 30 houses.</p>
+                </div>
+                <div class="game-card" style="border-color:#ff0000;" onclick="joinGame('bombs')">
+                    <h3>Escape Bombs</h3><p>Dodge falling bombs!</p>
+                </div>
             </div>
         </div>
 
-        <!-- Social -->
         <div class="col panel">
             <h2>Friends List</h2>
             <div id="friends-list"></div>
-            
             <h2 style="margin-top: 30px;">Online Players</h2>
             <div id="online-list"></div>
         </div>
@@ -124,12 +155,10 @@
             <div class="face-btn" style="background-image: url('HappyFace.png');" onclick="pickFace('HappyFace.png')"></div>
             <div class="face-btn" style="background-image: url('NerdFace.png');" onclick="pickFace('NerdFace.png')"></div>
         </div>
-        
         <h3>Body Colors</h3>
         <div class="color-picker-row"><span>Head:</span> <input type="color" id="col-head"></div>
         <div class="color-picker-row"><span>Torso:</span> <input type="color" id="col-torso"></div>
         <div class="color-picker-row"><span>Limbs:</span> <input type="color" id="col-limbs"></div>
-        
         <button onclick="saveCustomization()" style="margin-top: 20px;">Save & Return</button>
     </div>
 </div>
@@ -163,13 +192,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script>
 // ==========================================
-// DATABASE & AUTH SYSTEM (Local Storage)
+// DATABASE & AUTH SYSTEM
 // ==========================================
 let db = JSON.parse(localStorage.getItem('kyublox_db') || '{}');
-let currentUser = null;
-let viewingUser = null;
+let currentUser = null; let viewingUser = null;
 
-// Ensure Owner account exists
 if (!db['OwnerofKyublox']) {
     db['OwnerofKyublox'] = { pass: 'gylalafan', gender: 'Male', friends: [], avatar: { face: 'NormalFace.png', head: '#f1c27d', torso: '#0055ff', limbs: '#a4cc70' } };
     saveDB();
@@ -178,55 +205,47 @@ if (!db['OwnerofKyublox']) {
 function saveDB() { localStorage.setItem('kyublox_db', JSON.stringify(db)); }
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen')); document.getElementById(id).classList.add('active-screen'); }
 
-function handleAuth() {
-    const user = document.getElementById('auth-user').value.trim();
-    const pass = document.getElementById('auth-pass').value;
-    const gen = document.getElementById('auth-gender').value;
-    const err = document.getElementById('auth-error');
+function login() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value;
+    if (!user || !pass) return document.getElementById('login-error').innerText = "Fill all fields.";
+    if (!db[user] || db[user].pass !== pass) return document.getElementById('login-error').innerText = "Invalid credentials.";
+    currentUser = user; loadHub();
+}
+
+function signup() {
+    const user = document.getElementById('signup-user').value.trim();
+    const pass = document.getElementById('signup-pass').value;
+    const gen = document.getElementById('signup-gender').value;
+    if (!user || !pass) return document.getElementById('signup-error').innerText = "Fill all fields.";
+    if (db[user]) return document.getElementById('signup-error').innerText = "Username taken.";
     
-    if (!user || !pass) return err.innerText = "Username and Password required.";
-    
-    if (db[user]) {
-        if (db[user].pass !== pass) return err.innerText = "Incorrect password.";
-    } else {
-        db[user] = { pass: pass, gender: gen, friends: [], avatar: { face: 'NormalFace.png', head: '#f1c27d', torso: '#aaaaaa', limbs: '#aaaaaa' } };
-        saveDB();
-    }
-    currentUser = user;
-    loadHub();
+    db[user] = { pass: pass, gender: gen, friends: [], avatar: { face: 'NormalFace.png', head: '#f1c27d', torso: '#aaaaaa', limbs: '#aaaaaa' } };
+    saveDB(); currentUser = user; loadHub();
 }
 
 function logout() { currentUser = null; showScreen('auth-screen'); }
 
 // ==========================================
-// HUB & SOCIAL SYSTEM
+// HUB & SOCIAL
 // ==========================================
 function loadHub() {
     showScreen('hub-screen');
     document.getElementById('hub-welcome').innerText = `Logged in as: ${currentUser}`;
-    refreshFriends();
-    updateOnlineStatus();
+    refreshFriends(); updateOnlineStatus();
 }
 
-// Simulated Online Status across tabs
 function updateOnlineStatus() {
     if (!currentUser) return;
     let online = JSON.parse(localStorage.getItem('kyublox_online') || '{}');
     online[currentUser] = Date.now();
-    
-    // Clean old (inactive > 15s)
     let active = [];
-    for (let p in online) {
-        if (Date.now() - online[p] < 15000) active.push(p);
-        else delete online[p];
-    }
+    for (let p in online) { if (Date.now() - online[p] < 15000) active.push(p); else delete online[p]; }
     localStorage.setItem('kyublox_online', JSON.stringify(online));
 
-    const list = document.getElementById('online-list');
-    list.innerHTML = '';
+    const list = document.getElementById('online-list'); list.innerHTML = '';
     active.forEach(p => {
-        const d = document.createElement('div');
-        d.className = 'list-item';
+        const d = document.createElement('div'); d.className = 'list-item';
         d.innerHTML = `<span>🟢 ${p}</span> <button style="width:auto; padding:5px; margin:0;" onclick="viewProfile('${p}')">View</button>`;
         list.appendChild(d);
     });
@@ -234,13 +253,11 @@ function updateOnlineStatus() {
 }
 
 function refreshFriends() {
-    const list = document.getElementById('friends-list');
-    list.innerHTML = '';
+    const list = document.getElementById('friends-list'); list.innerHTML = '';
     const friends = db[currentUser].friends || [];
-    if (friends.length === 0) list.innerHTML = "<p>No friends yet.</p>";
+    if (friends.length === 0) list.innerHTML = "<p style='color:#666;'>No friends yet.</p>";
     friends.forEach(f => {
-        const d = document.createElement('div');
-        d.className = 'list-item';
+        const d = document.createElement('div'); d.className = 'list-item';
         d.innerHTML = `<span>${f}</span> <button style="width:auto; padding:5px; margin:0;" onclick="viewProfile('${f}')">View</button>`;
         list.appendChild(d);
     });
@@ -250,187 +267,192 @@ function viewProfile(user) {
     viewingUser = user;
     document.getElementById('prof-name').innerText = user;
     document.getElementById('prof-gender').innerText = db[user].gender || 'Unknown';
-    
     const addBtn = document.getElementById('prof-add-btn');
-    if (user === currentUser || db[currentUser].friends.includes(user)) addBtn.style.display = 'none';
-    else addBtn.style.display = 'block';
-    
+    if (user === currentUser || db[currentUser].friends.includes(user)) addBtn.style.display = 'none'; else addBtn.style.display = 'block';
     showScreen('profile-screen');
 }
 
-function addFriend() {
-    db[currentUser].friends.push(viewingUser);
-    saveDB();
-    alert(`Added ${viewingUser} to friends!`);
-    loadHub();
-}
+function addFriend() { db[currentUser].friends.push(viewingUser); saveDB(); alert(`Added ${viewingUser}!`); loadHub(); }
 
 // ==========================================
-// CUSTOMIZATION SYSTEM
+// CUSTOMIZATION
 // ==========================================
 let tempFace = '';
-function pickFace(face) {
-    tempFace = face;
-    document.querySelectorAll('.face-btn').forEach(b => b.classList.remove('selected'));
-    event.target.classList.add('selected');
-}
-
-document.getElementById('customize-screen').addEventListener('focus', () => {
+function pickFace(face) { tempFace = face; document.querySelectorAll('.face-btn').forEach(b => b.classList.remove('selected')); event.target.classList.add('selected'); }
+function openCustomize() {
     const av = db[currentUser].avatar;
     document.getElementById('col-head').value = av.head;
     document.getElementById('col-torso').value = av.torso;
     document.getElementById('col-limbs').value = av.limbs;
     tempFace = av.face;
-}, true);
-
+    showScreen('customize-screen');
+}
 function saveCustomization() {
-    db[currentUser].avatar = {
-        head: document.getElementById('col-head').value,
-        torso: document.getElementById('col-torso').value,
-        limbs: document.getElementById('col-limbs').value,
-        face: tempFace || 'NormalFace.png'
-    };
-    saveDB();
-    showScreen('hub-screen');
+    db[currentUser].avatar = { head: document.getElementById('col-head').value, torso: document.getElementById('col-torso').value, limbs: document.getElementById('col-limbs').value, face: tempFace || 'NormalFace.png' };
+    saveDB(); showScreen('hub-screen');
 }
 
 // ==========================================
-// THREE.JS & GAME ENGINE
+// THREE.JS ENGINE & AVATARS
 // ==========================================
-let inGame = false;
-let currentGameRoom = "";
-let scene, camera, renderer, clock, myPlayer, killParts, platforms;
+let inGame = false; let currentGameType = ""; let currentGameRoom = "";
+let scene, camera, renderer, clock, myPlayer, killParts, platforms, bombsArray = [];
 const texLoader = new THREE.TextureLoader();
 
 function initGameEngine() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB);
-    scene.fog = new THREE.Fog(0x87CEEB, 20, 120);
-
+    scene.background = new THREE.Color(0x87CEEB); scene.fog = new THREE.Fog(0x87CEEB, 20, 150);
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
-    
-    const canvas = renderer.domElement;
-    document.body.appendChild(canvas);
-
+    document.body.appendChild(renderer.domElement);
     scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(25, 50, 25);
-    dirLight.castShadow = true;
-    scene.add(dirLight);
-
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6); dirLight.position.set(25, 50, 25); dirLight.castShadow = true; scene.add(dirLight);
     clock = new THREE.Clock();
-}
-initGameEngine(); // Setup WebGL once
+} initGameEngine();
 
-function createR6Rig(avatarData) {
+function createR6Rig(avatarData, hasSword = false) {
     const group = new THREE.Group();
-    
     const cHead = new THREE.Color(avatarData.head || '#f1c27d');
     const matSkin = new THREE.MeshStandardMaterial({ color: cHead, roughness: 0.4 });
     const matTorso = new THREE.MeshStandardMaterial({ color: new THREE.Color(avatarData.torso || '#0055ff'), roughness: 0.4 });
     const matLimbs = new THREE.MeshStandardMaterial({ color: new THREE.Color(avatarData.limbs || '#a4cc70'), roughness: 0.4 });
     
     let headMats = [matSkin, matSkin, matSkin, matSkin, matSkin, matSkin];
-    if (avatarData.face) {
-        const faceTex = texLoader.load(avatarData.face);
-        faceTex.magFilter = THREE.NearestFilter;
-        headMats[4] = new THREE.MeshStandardMaterial({ color: cHead, map: faceTex, transparent: true });
-    }
+    if (avatarData.face) { const faceTex = texLoader.load(avatarData.face); faceTex.magFilter = THREE.NearestFilter; headMats[4] = new THREE.MeshStandardMaterial({ color: cHead, map: faceTex, transparent: true }); }
     
-    const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), headMats);
-    head.position.y = 2.1; head.castShadow = true; group.add(head);
-    
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1), matTorso);
-    torso.position.y = 0.5; torso.castShadow = true; group.add(torso);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), headMats); head.position.y = 2.1; head.castShadow = true; group.add(head);
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1), matTorso); torso.position.y = 0.5; torso.castShadow = true; group.add(torso);
     
     const lArmPivot = new THREE.Group(); lArmPivot.position.set(-1.5, 1.4, 0);
-    const lArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs);
-    lArm.position.y = -0.9; lArm.castShadow = true; lArmPivot.add(lArm); group.add(lArmPivot);
+    const lArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs); lArm.position.y = -0.9; lArm.castShadow = true; lArmPivot.add(lArm); group.add(lArmPivot);
     
     const rArmPivot = new THREE.Group(); rArmPivot.position.set(1.5, 1.4, 0);
-    const rArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs);
-    rArm.position.y = -0.9; rArm.castShadow = true; rArmPivot.add(rArm); group.add(rArmPivot);
+    const rArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs); rArm.position.y = -0.9; rArm.castShadow = true; rArmPivot.add(rArm); group.add(rArmPivot);
     
     const lLegPivot = new THREE.Group(); lLegPivot.position.set(-0.55, -0.5, 0);
-    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs);
-    lLeg.position.y = -0.9; lLeg.castShadow = true; lLegPivot.add(lLeg); group.add(lLegPivot);
+    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs); lLeg.position.y = -0.9; lLeg.castShadow = true; lLegPivot.add(lLeg); group.add(lLegPivot);
     
     const rLegPivot = new THREE.Group(); rLegPivot.position.set(0.55, -0.5, 0);
-    const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs);
-    rLeg.position.y = -0.9; rLeg.castShadow = true; rLegPivot.add(rLeg); group.add(rLegPivot);
-    
+    const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs); rLeg.position.y = -0.9; rLeg.castShadow = true; rLegPivot.add(rLeg); group.add(rLegPivot);
     group.position.set(0, 3, 0); 
     
+    // Sword Tool
+    if (hasSword) {
+        const swordGrp = new THREE.Group();
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), new THREE.MeshStandardMaterial({color:0x555555}));
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3, 0.1), new THREE.MeshStandardMaterial({color:0xdddddd}));
+        blade.position.y = 2; swordGrp.add(handle); swordGrp.add(blade);
+        swordGrp.position.set(0, -1.5, -0.5); swordGrp.rotation.x = -Math.PI/2;
+        rArmPivot.add(swordGrp);
+    }
+
     // Nametag
     const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,256,64);
+    const ctx = canvas.getContext('2d'); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,256,64);
     ctx.font = 'bold 30px Arial'; ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.fillText(avatarData.username || 'Player', 128, 42);
-    const ntTex = new THREE.CanvasTexture(canvas);
-    const ntMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: ntTex }));
+    const ntMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
     ntMesh.position.y = 3.2; ntMesh.scale.set(3, 0.75, 1); group.add(ntMesh);
 
-    return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso };
+    return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso, colors: avatarData };
 }
 
 function addPart(x, y, z, w, h, d, color, isKill = false) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.5 }));
-    mesh.position.set(x, y, z); mesh.receiveShadow = true; mesh.castShadow = true;
-    scene.add(mesh);
+    mesh.position.set(x, y, z); mesh.receiveShadow = true; mesh.castShadow = true; scene.add(mesh);
     const box = new THREE.Box3().setFromObject(mesh);
     if (isKill) killParts.push(box); else platforms.push(box);
     return mesh;
 }
 
+function buildHouse(cx, cz) {
+    addPart(cx, 0, cz, 12, 1, 12, 0x8B4513); // Floor
+    addPart(cx, 4, cz-5.5, 12, 8, 1, 0xeeddcc); // Back wall
+    addPart(cx-5.5, 4, cz, 1, 8, 10, 0xeeddcc); // Left
+    addPart(cx+5.5, 4, cz, 1, 8, 10, 0xeeddcc); // Right
+    addPart(cx-3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); // Front Left
+    addPart(cx+3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); // Front Right
+    addPart(cx, 6.5, cz+5.5, 2, 3, 1, 0xeeddcc); // Door Top
+    addPart(cx, 8.5, cz, 13, 1, 13, 0x555555); // Roof
+}
+
 // ==========================================
-// GAME STATE MANAGEMENT
+// GAME STATE
 // ==========================================
-function joinGame(gameType) {
+let ragdollParts = []; let isDead = false;
+
+function joinGame(type) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-    document.getElementById('game-ui').style.display = 'block';
-    renderer.domElement.style.display = 'block';
+    document.getElementById('game-ui').style.display = 'block'; renderer.domElement.style.display = 'block';
     
-    // Clear old scene parts
     scene.children = scene.children.filter(c => c.type === 'AmbientLight' || c.type === 'DirectionalLight');
-    platforms = []; killParts = [];
+    platforms = []; killParts = []; bombsArray = []; isDead = false;
+    currentGameType = type; currentGameRoom = "kyublox-global-" + type + "-v1";
     
-    // Load Map
-    if (gameType === 'baseplate') {
+    let hasSword = false;
+    document.getElementById('snd-bgm').pause(); document.getElementById('snd-bgm').currentTime = 0;
+
+    if (type === 'baseplate') {
         addPart(0, -1, 0, 100, 2, 100, 0x33aa33);
-        currentGameRoom = "kyublox-global-baseplate-v1";
-    } else {
-        addPart(0, -1, 0, 12, 2, 12, 0x33aa33);
-        addPart(0, 1, -14, 5, 1, 5, 0xffffff);
-        addPart(0, 3, -24, 4, 1, 4, 0xffaa00);
-        addPart(10, 4, -24, 4, 1, 4, 0xffaa00);
-        addPart(22, 1, -24, 12, 1, 10, 0xff0000, true);
-        addPart(36, 7, -24, 6, 1, 6, 0x00ff00);
-        currentGameRoom = "kyublox-global-obby-v1";
+    } else if (type === 'obby') {
+        addPart(0, -1, 0, 12, 2, 12, 0x33aa33); addPart(0, 1, -14, 5, 1, 5, 0xffffff);
+        addPart(0, 3, -24, 4, 1, 4, 0xffaa00); addPart(22, 1, -24, 12, 1, 10, 0xff0000, true); addPart(36, 7, -24, 6, 1, 6, 0x00ff00);
+    } else if (type === 'sfoth') {
+        hasSword = true;
+        addPart(0, -1, 0, 30, 2, 30, 0x333333); addPart(20, 10, 20, 15, 2, 15, 0x228B22);
+        addPart(-25, 20, -10, 20, 2, 20, 0x228B22); addPart(10, 5, 10, 4, 10, 4, 0x555555); // Pillar
+        document.getElementById('snd-bgm').play().catch(e=>console.log("Audio play blocked"));
+    } else if (type === 'neighborhood') {
+        addPart(0, -1, 0, 200, 2, 200, 0x33aa33);
+        for(let i=0; i<30; i++) buildHouse((i%6)*30 - 75, Math.floor(i/6)*30 - 60);
+    } else if (type === 'bombs') {
+        addPart(0, -1, 0, 80, 2, 80, 0x555555); // Arena
+        addPart(0, 5, -40, 80, 10, 2, 0x8B4513); addPart(0, 5, 40, 80, 10, 2, 0x8B4513); // Fence
+        addPart(-40, 5, 0, 2, 10, 80, 0x8B4513); addPart(40, 5, 0, 2, 10, 80, 0x8B4513);
     }
 
-    const myAvatar = db[currentUser].avatar;
-    myAvatar.username = currentUser;
-    myPlayer = createR6Rig(myAvatar);
-    scene.add(myPlayer.group);
+    const myAvatar = db[currentUser].avatar; myAvatar.username = currentUser;
+    myPlayer = createR6Rig(myAvatar, hasSword); scene.add(myPlayer.group);
     
     document.getElementById('chat-messages').innerHTML = '';
-    inGame = true;
-    initMultiplayer();
-    animate(); // Start loop
+    inGame = true; initMultiplayer(); animate();
 }
 
 function leaveGame() {
     inGame = false;
-    document.getElementById('game-ui').style.display = 'none';
-    renderer.domElement.style.display = 'none';
+    document.getElementById('game-ui').style.display = 'none'; renderer.domElement.style.display = 'none';
     if (myPeer) myPeer.destroy();
     Object.values(otherPlayers).forEach(p => scene.remove(p.group));
     for (let key in otherPlayers) delete otherPlayers[key];
+    document.getElementById('snd-bgm').pause();
     loadHub();
+}
+
+function die() {
+    if(isDead) return;
+    isDead = true; document.getElementById('snd-death').currentTime = 0; document.getElementById('snd-death').play();
+    myPlayer.group.visible = false; broadcast({ type: 'die', id: myId });
+    
+    // Spawn physics ragdoll parts
+    const pos = myPlayer.group.position; const colors = myPlayer.colors;
+    const partsData = [
+        { size: [1.2,1.2,1.2], col: colors.head }, { size: [2,2,1], col: colors.torso },
+        { size: [1,2,1], col: colors.limbs }, { size: [1,2,1], col: colors.limbs },
+        { size: [1,2,1], col: colors.limbs }, { size: [1,2,1], col: colors.limbs }
+    ];
+    partsData.forEach(p => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...p.size), new THREE.MeshStandardMaterial({color: p.col}));
+        mesh.position.set(pos.x + (Math.random()-0.5)*2, pos.y + Math.random()*2, pos.z + (Math.random()-0.5)*2);
+        scene.add(mesh);
+        ragdollParts.push({ mesh, vy: Math.random()*0.2 });
+    });
+
+    setTimeout(() => {
+        isDead = false; myPlayer.group.position.set(0,3,0); myPlayer.group.visible = true; velocityY = 0;
+        ragdollParts.forEach(p => scene.remove(p.mesh)); ragdollParts = [];
+    }, 3000);
 }
 
 // ==========================================
@@ -438,97 +460,83 @@ function leaveGame() {
 // ==========================================
 const GRAVITY = -0.018; const JUMP_FORCE = 0.38; const SPEED = 0.18;
 let velocityY = 0; let isGrounded = false;
-const input = { forward: 0, right: 0, jump: false };
-const keys = {}; let isChatFocused = false;
+const input = { forward: 0, right: 0, jump: false }; const keys = {}; let isChatFocused = false;
 
-// Keyboard
 window.addEventListener('keydown', e => { if (!isChatFocused) keys[e.code] = true; });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
-// Camera Vars
-let camDist = 12; let camYaw = 0; let camPitch = 0.2;
-let isDragging = false; let lastMouseX = 0, lastMouseY = 0;
-
-// PC Camera Drag (Right Click)
+let camDist = 12; let camYaw = 0; let camPitch = 0.2; let isDragging = false; let lastMouseX = 0, lastMouseY = 0;
 window.addEventListener('contextmenu', e => e.preventDefault());
 window.addEventListener('mousedown', e => { if (inGame && e.button === 2) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; }});
 window.addEventListener('mouseup', e => { if (e.button === 2) isDragging = false; });
 window.addEventListener('mousemove', e => {
     if (inGame && isDragging) {
-        camYaw -= (e.clientX - lastMouseX) * 0.005;
-        camPitch += (e.clientY - lastMouseY) * 0.005;
-        camPitch = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, camPitch));
-        lastMouseX = e.clientX; lastMouseY = e.clientY;
+        camYaw -= (e.clientX - lastMouseX) * 0.005; camPitch += (e.clientY - lastMouseY) * 0.005;
+        camPitch = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, camPitch)); lastMouseX = e.clientX; lastMouseY = e.clientY;
     }
 });
 window.addEventListener('wheel', e => { if(inGame) { camDist += e.deltaY * 0.015; camDist = Math.max(4, Math.min(25, camDist)); }});
 
-// Mobile Joystick
-const joyZone = document.getElementById('joystick-zone');
-const joyKnob = document.getElementById('joystick-knob');
+// Mobile Controls
+const joyZone = document.getElementById('joystick-zone'); const joyKnob = document.getElementById('joystick-knob');
 let joyCenter = { x: 0, y: 0 }; let touchId = null;
-
 joyZone.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; touchId = t.identifier; const rect = joyZone.getBoundingClientRect(); joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; updateJoystick(t); }, { passive: false });
 joyZone.addEventListener('touchmove', e => { e.preventDefault(); for (let i = 0; i < e.changedTouches.length; i++) if (e.changedTouches[i].identifier === touchId) updateJoystick(e.changedTouches[i]); }, { passive: false });
 function resetJoystick() { touchId = null; input.forward = 0; input.right = 0; joyKnob.style.transform = `translate(0px, 0px)`; }
 joyZone.addEventListener('touchend', resetJoystick); joyZone.addEventListener('touchcancel', resetJoystick);
-
 function updateJoystick(touch) {
-    let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y;
-    let dist = Math.sqrt(dx * dx + dy * dy); let maxDist = 40;
+    let dx = touch.clientX - joyCenter.x; let dy = touch.clientY - joyCenter.y; let dist = Math.sqrt(dx * dx + dy * dy); let maxDist = 40;
     if (dist > maxDist) { dx = (dx / dist) * maxDist; dy = (dy / dist) * maxDist; }
-    joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-    input.right = dx / maxDist; input.forward = -dy / maxDist;
+    joyKnob.style.transform = `translate(${dx}px, ${dy}px)`; input.right = dx / maxDist; input.forward = -dy / maxDist;
 }
+document.getElementById('jump-btn').addEventListener('touchstart', e => { e.preventDefault(); input.jump = true; }, { passive: false });
+document.getElementById('jump-btn').addEventListener('touchend', e => { e.preventDefault(); input.jump = false; }, { passive: false });
 
-// Mobile Jump
-const jumpBtn = document.getElementById('jump-btn');
-jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); input.jump = true; }, { passive: false });
-jumpBtn.addEventListener('touchend', e => { e.preventDefault(); input.jump = false; }, { passive: false });
-
-// Mobile Camera Drag Zone (Right Half Screen)
-const camDragZone = document.getElementById('camera-drag-zone');
-let camTouchId = null; let lastCamTouchX = 0, lastCamTouchY = 0;
-camDragZone.addEventListener('touchstart', e => {
-    e.preventDefault();
-    if(camTouchId === null) {
-        const t = e.changedTouches[0];
-        camTouchId = t.identifier; lastCamTouchX = t.clientX; lastCamTouchY = t.clientY;
-    }
-}, { passive: false });
+const camDragZone = document.getElementById('camera-drag-zone'); let camTouchId = null; let lastCamTouchX = 0, lastCamTouchY = 0;
+camDragZone.addEventListener('touchstart', e => { e.preventDefault(); if(camTouchId === null) { const t = e.changedTouches[0]; camTouchId = t.identifier; lastCamTouchX = t.clientX; lastCamTouchY = t.clientY; } }, { passive: false });
 camDragZone.addEventListener('touchmove', e => {
     e.preventDefault();
-    for(let i=0; i<e.changedTouches.length; i++) {
-        if(e.changedTouches[i].identifier === camTouchId) {
-            const t = e.changedTouches[i];
-            camYaw -= (t.clientX - lastCamTouchX) * 0.006;
-            camPitch += (t.clientY - lastCamTouchY) * 0.006;
-            camPitch = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, camPitch));
-            lastCamTouchX = t.clientX; lastCamTouchY = t.clientY;
-        }
+    for(let i=0; i<e.changedTouches.length; i++) if(e.changedTouches[i].identifier === camTouchId) {
+        const t = e.changedTouches[i]; camYaw -= (t.clientX - lastCamTouchX) * 0.006; camPitch += (t.clientY - lastCamTouchY) * 0.006;
+        camPitch = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, camPitch)); lastCamTouchX = t.clientX; lastCamTouchY = t.clientY;
     }
 }, { passive: false });
-function resetCamTouch(e) { for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === camTouchId) camTouchId = null; } }
+function resetCamTouch(e) { for(let i=0; i<e.changedTouches.length; i++) if(e.changedTouches[i].identifier === camTouchId) camTouchId = null; }
 camDragZone.addEventListener('touchend', resetCamTouch); camDragZone.addEventListener('touchcancel', resetCamTouch);
+
+// Sword Swing Input
+let isSwinging = false;
+window.addEventListener('mousedown', e => {
+    if(inGame && currentGameType === 'sfoth' && e.button === 0 && !isChatFocused && !isDead) performSwing();
+});
+camDragZone.addEventListener('touchstart', e => {
+    if(inGame && currentGameType === 'sfoth' && !isDead) performSwing(); // Tap screen to swing on mobile
+});
+
+function performSwing() {
+    if(isSwinging) return;
+    isSwinging = true; broadcast({ type: 'swing', id: myId });
+    // Hit detection (distance based)
+    for(let pid in otherPlayers) {
+        if(otherPlayers[pid].group.position.distanceTo(myPlayer.group.position) < 5) {
+            broadcast({ type: 'kill', target: pid });
+        }
+    }
+    setTimeout(() => isSwinging = false, 500);
+}
 
 // ==========================================
 // MULTIPLAYER (PeerJS)
 // ==========================================
-const chatMsgs = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const mpStatus = document.getElementById('mp-status');
-const otherPlayers = {}; const connections = [];
+const chatMsgs = document.getElementById('chat-messages'); const chatInput = document.getElementById('chat-input');
+const mpStatus = document.getElementById('mp-status'); const otherPlayers = {}; const connections = [];
 let myPeer, myId, hostConnection = null;
 
-chatInput.addEventListener('focus', () => isChatFocused = true);
-chatInput.addEventListener('blur', () => isChatFocused = false);
+chatInput.addEventListener('focus', () => isChatFocused = true); chatInput.addEventListener('blur', () => isChatFocused = false);
 function addChat(name, text) { const d = document.createElement('div'); d.innerHTML = `<b>${name}:</b> ${text}`; chatMsgs.appendChild(d); chatMsgs.scrollTop = chatMsgs.scrollHeight; }
-
 chatInput.addEventListener('keypress', e => {
     if (e.key === 'Enter' && chatInput.value.trim() !== '') {
-        const msg = chatInput.value.trim();
-        addChat(currentUser, msg);
-        broadcast({ type: 'chat', user: currentUser, msg: msg });
+        const msg = chatInput.value.trim(); addChat(currentUser, msg); broadcast({ type: 'chat', user: currentUser, msg: msg });
         chatInput.value = ''; chatInput.blur();
     }
 });
@@ -536,134 +544,124 @@ chatInput.addEventListener('keypress', e => {
 function initMultiplayer() {
     myPeer = new Peer();
     myPeer.on('open', id => {
-        myId = id;
-        const conn = myPeer.connect(currentGameRoom, { reliable: true });
-        let connected = false;
-        conn.on('open', () => {
-            connected = true; hostConnection = conn;
-            mpStatus.innerText = "● Live Online Room"; mpStatus.style.color = "#00ff00";
-            setupConnection(conn);
-            broadcastAvatar();
-        });
+        myId = id; const conn = myPeer.connect(currentGameRoom, { reliable: true }); let connected = false;
+        conn.on('open', () => { connected = true; hostConnection = conn; mpStatus.innerText = "● Live Online Room"; mpStatus.style.color = "#00ff00"; setupConnection(conn); broadcastAvatar(); });
         setTimeout(() => { if (!connected) { myPeer.destroy(); becomeLobbyHost(); } }, 1500);
     });
 }
-
 function becomeLobbyHost() {
     myPeer = new Peer(currentGameRoom);
-    myPeer.on('open', id => {
-        myId = id;
-        mpStatus.innerText = "● Empty Room (Lobby Host)"; mpStatus.style.color = "#ffff00";
-    });
-    myPeer.on('connection', newConn => {
-        connections.push(newConn); setupConnection(newConn);
-        mpStatus.innerText = `● Live Online (${connections.length + 1} Players)`; mpStatus.style.color = "#00ff00";
-        broadcastAvatar(); // Tell new person what I look like
-    });
+    myPeer.on('open', id => { myId = id; mpStatus.innerText = "● Empty Room (Lobby Host)"; mpStatus.style.color = "#ffff00"; });
+    myPeer.on('connection', newConn => { connections.push(newConn); setupConnection(newConn); mpStatus.innerText = `● Live Online`; mpStatus.style.color = "#00ff00"; broadcastAvatar(); });
 }
 
 function setupConnection(c) {
     c.on('data', data => {
         if (hostConnection === null) broadcast(data); 
         if (data.type === 'chat') addChat(data.user, data.msg);
+        if (data.type === 'kill' && data.target === myId) die();
+        if (data.type === 'die' && otherPlayers[data.id]) otherPlayers[data.id].group.visible = false;
+        if (data.type === 'swing' && otherPlayers[data.id]) {
+            otherPlayers[data.id].rArmPivot.rotation.x = Math.PI; // Quick visual swing
+        }
         if (data.type === 'avatar' && data.id !== myId) {
-            if (otherPlayers[data.id]) { scene.remove(otherPlayers[data.id].group); }
+            if (otherPlayers[data.id]) scene.remove(otherPlayers[data.id].group);
             data.avatar.username = data.user;
-            otherPlayers[data.id] = createR6Rig(data.avatar);
+            otherPlayers[data.id] = createR6Rig(data.avatar, currentGameType === 'sfoth');
             scene.add(otherPlayers[data.id].group);
         }
         if (data.type === 'pos' && data.id !== myId && otherPlayers[data.id]) {
-            const target = otherPlayers[data.id];
-            target.group.position.lerp(new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z), 0.3);
-            target.group.rotation.y = data.rot;
-            animateRig(target, data.animTime, data.isMoving, data.isGrounded);
+            const target = otherPlayers[data.id]; target.group.visible = !data.isDead;
+            if(!data.isDead) {
+                target.group.position.lerp(new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z), 0.3); target.group.rotation.y = data.rot;
+                animateRig(target, data.animTime, data.isMoving, data.isGrounded, false);
+            }
         }
     });
     c.on('close', () => { if (otherPlayers[c.peer]) { scene.remove(otherPlayers[c.peer].group); delete otherPlayers[c.peer]; } });
 }
-
 function broadcast(data) {
     if (!data.id) data.id = myId;
-    if (hostConnection && hostConnection.open) hostConnection.send(data);
-    else connections.forEach(c => { if (c.open && c.peer !== data.id) c.send(data); });
+    if (hostConnection && hostConnection.open) hostConnection.send(data); else connections.forEach(c => { if (c.open && c.peer !== data.id) c.send(data); });
 }
-
-function broadcastAvatar() {
-    broadcast({ type: 'avatar', id: myId, user: currentUser, avatar: db[currentUser].avatar });
-}
+function broadcastAvatar() { broadcast({ type: 'avatar', id: myId, user: currentUser, avatar: db[currentUser].avatar }); }
 
 // ==========================================
 // GAME LOOP
 // ==========================================
-let animTime = 0; let lastSync = 0;
+let animTime = 0; let lastSync = 0; let bombTimer = 0;
+const wSnd = document.getElementById('snd-walk'); const jSnd = document.getElementById('snd-jump');
 
-function animateRig(rig, t, moving, grounded) {
+function animateRig(rig, t, moving, grounded, localSwinging = false) {
     if (!grounded) {
         rig.lArmPivot.rotation.x = THREE.MathUtils.lerp(rig.lArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
-        rig.rArmPivot.rotation.x = THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
-        rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0.3, 0.2);
-        rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, -0.3, 0.2);
+        rig.rArmPivot.rotation.x = localSwinging ? Math.PI/2 : THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
+        rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0.3, 0.2); rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, -0.3, 0.2);
     } else if (moving) {
         const swing = Math.sin(t * 13) * 0.7;
-        rig.lArmPivot.rotation.x = swing; rig.rArmPivot.rotation.x = -swing;
-        rig.lLegPivot.rotation.x = -swing; rig.rLegPivot.rotation.x = swing;
-        rig.torso.rotation.z = Math.sin(t * 13) * 0.03;
+        rig.lArmPivot.rotation.x = swing; rig.rArmPivot.rotation.x = localSwinging ? Math.PI/2 : -swing;
+        rig.lLegPivot.rotation.x = -swing; rig.rLegPivot.rotation.x = swing; rig.torso.rotation.z = Math.sin(t * 13) * 0.03;
     } else {
         const breath = Math.sin(t * 2.5) * 0.04;
         rig.lArmPivot.rotation.x = THREE.MathUtils.lerp(rig.lArmPivot.rotation.x, breath, 0.1);
-        rig.rArmPivot.rotation.x = THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -breath, 0.1);
-        rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0, 0.1);
-        rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, 0, 0.1);
-        rig.torso.rotation.z = 0;
+        rig.rArmPivot.rotation.x = localSwinging ? Math.PI/2 : THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -breath, 0.1);
+        rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0, 0.1); rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, 0, 0.1); rig.torso.rotation.z = 0;
     }
 }
 
 function animate() {
-    if (!inGame) return; // Stop loop when left game
-    requestAnimationFrame(animate);
-    
+    if (!inGame) return; requestAnimationFrame(animate);
     const dt = clock.getDelta(); animTime += dt;
-    let fwd = input.forward, rgt = input.right, jmp = input.jump;
     
-    if (!isChatFocused) {
-        if (keys['KeyW']) fwd += 1; if (keys['KeyS']) fwd -= 1;
-        if (keys['KeyD']) rgt += 1; if (keys['KeyA']) rgt -= 1;
-        if (keys['Space']) jmp = true;
-    }
+    // Animate Ragdolls
+    ragdollParts.forEach(p => { p.vy += GRAVITY; p.mesh.position.y += p.vy; p.mesh.rotation.x += 0.05; p.mesh.rotation.y += 0.05; });
 
-    const isMoving = Math.abs(fwd) > 0.05 || Math.abs(rgt) > 0.05;
-    if (isMoving) {
-        const inputAngle = Math.atan2(rgt, fwd); const moveAngle = camYaw + inputAngle;
-        myPlayer.group.position.x += Math.sin(moveAngle) * SPEED;
-        myPlayer.group.position.z += -Math.cos(moveAngle) * SPEED;
-        
-        const targetRot = moveAngle + Math.PI; 
-        let rotDiff = targetRot - myPlayer.group.rotation.y;
-        while (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
-        while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
-        myPlayer.group.rotation.y += rotDiff * 0.25;
-    }
-
-    velocityY += GRAVITY; myPlayer.group.position.y += velocityY;
-    
-    const playerBox = new THREE.Box3().setFromCenterAndSize(
-        new THREE.Vector3(myPlayer.group.position.x, myPlayer.group.position.y, myPlayer.group.position.z),
-        new THREE.Vector3(1.8, 3.8, 1.8)
-    );
-    
-    isGrounded = false;
-    for (let kp of killParts) if (kp.intersectsBox(playerBox)) { myPlayer.group.position.set(0,3,0); velocityY = 0; break; }
-    
-    for (let plat of platforms) {
-        if (plat.intersectsBox(playerBox) && velocityY <= 0 && playerBox.min.y > plat.max.y - 1.0) {
-            myPlayer.group.position.y = plat.max.y + 1.9; velocityY = 0; isGrounded = true;
+    // Bombs Game Logic
+    if (currentGameType === 'bombs') {
+        bombTimer += dt;
+        if (bombTimer > 0.5) {
+            bombTimer = 0;
+            const bomb = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 8), new THREE.MeshStandardMaterial({color: 0x222222}));
+            bomb.position.set((Math.random()-0.5)*70, 40, (Math.random()-0.5)*70);
+            scene.add(bomb); bombsArray.push({ mesh: bomb, age: 0 });
+        }
+        for (let i = bombsArray.length - 1; i >= 0; i--) {
+            let b = bombsArray[i]; b.age += dt; b.mesh.position.y -= 15 * dt; // Fall speed
+            if (!isDead && myPlayer.group.position.distanceTo(b.mesh.position) < 3.5) die();
+            if (b.age > 5) { scene.remove(b.mesh); bombsArray.splice(i, 1); }
         }
     }
-    
-    if (myPlayer.group.position.y < -30) { myPlayer.group.position.set(0,3,0); velocityY = 0; }
-    if (jmp && isGrounded) velocityY = JUMP_FORCE;
 
-    animateRig(myPlayer, animTime, isMoving, isGrounded);
+    if(isDead) { renderer.render(scene, camera); return; } // Pause player control if dead
+
+    let fwd = input.forward, rgt = input.right, jmp = input.jump;
+    if (!isChatFocused) {
+        if (keys['KeyW']) fwd += 1; if (keys['KeyS']) fwd -= 1; if (keys['KeyD']) rgt += 1; if (keys['KeyA']) rgt -= 1; if (keys['Space']) jmp = true;
+    }
+    const isMoving = Math.abs(fwd) > 0.05 || Math.abs(rgt) > 0.05;
+
+    if (isMoving) {
+        const inputAngle = Math.atan2(rgt, fwd); const moveAngle = camYaw + inputAngle;
+        myPlayer.group.position.x += Math.sin(moveAngle) * SPEED; myPlayer.group.position.z += -Math.cos(moveAngle) * SPEED;
+        const targetRot = moveAngle + Math.PI; let rotDiff = targetRot - myPlayer.group.rotation.y;
+        while (rotDiff > Math.PI) rotDiff -= Math.PI * 2; while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
+        myPlayer.group.rotation.y += rotDiff * 0.25;
+        if(isGrounded && wSnd.paused) wSnd.play().catch(()=>{});
+    } else { wSnd.pause(); }
+
+    if(!isGrounded) wSnd.pause();
+
+    velocityY += GRAVITY; myPlayer.group.position.y += velocityY;
+    const playerBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(myPlayer.group.position.x, myPlayer.group.position.y, myPlayer.group.position.z), new THREE.Vector3(1.8, 3.8, 1.8));
+    
+    isGrounded = false;
+    for (let kp of killParts) if (kp.intersectsBox(playerBox)) { die(); break; }
+    for (let plat of platforms) { if (plat.intersectsBox(playerBox) && velocityY <= 0 && playerBox.min.y > plat.max.y - 1.0) { myPlayer.group.position.y = plat.max.y + 1.9; velocityY = 0; isGrounded = true; } }
+    
+    if (myPlayer.group.position.y < -40) die();
+    
+    if (jmp && isGrounded) { velocityY = JUMP_FORCE; jSnd.currentTime = 0; jSnd.play().catch(()=>{}); }
+    animateRig(myPlayer, animTime, isMoving, isGrounded, isSwinging);
 
     const camTarget = myPlayer.group.position.clone(); camTarget.y += 1.2;
     camera.position.x = camTarget.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
@@ -673,16 +671,12 @@ function animate() {
 
     if (animTime - lastSync > 0.08) {
         lastSync = animTime;
-        broadcast({ type: 'pos', pos: myPlayer.group.position, rot: myPlayer.group.rotation.y, animTime, isMoving, isGrounded });
+        broadcast({ type: 'pos', pos: myPlayer.group.position, rot: myPlayer.group.rotation.y, animTime, isMoving, isGrounded, isDead });
     }
     renderer.render(scene, camera);
 }
 
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
 </script>
 </body>
 </html>
