@@ -2,39 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Kyublox Multiplayer Obby</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: sans-serif; touch-action: none; }
+        * { touch-action: manipulation; user-select: none; }
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         canvas { display: block; }
         
         /* UI OVERLAYS */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        #logo { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 260px; max-width: 50%; pointer-events: auto; }
+        #logo { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 240px; max-width: 45%; pointer-events: auto; }
         
         /* CHAT SYSTEM */
-        #chat-container { position: absolute; top: 20px; left: 20px; width: 300px; height: 220px; display: flex; flex-direction: column; pointer-events: auto; z-index: 100; }
-        #chat-messages { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.4); color: white; padding: 10px; border-radius: 8px 8px 0 0; text-shadow: 1px 1px 0 #000; font-size: 14px; }
-        #chat-input { width: 100%; padding: 8px; border: none; background: rgba(0,0,0,0.7); color: white; border-radius: 0 0 8px 8px; outline: none; box-sizing: border-box; }
+        #chat-container { position: absolute; top: 20px; left: 20px; width: 280px; height: 200px; display: flex; flex-direction: column; pointer-events: auto; z-index: 100; }
+        #chat-messages { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.4); color: white; padding: 8px; border-radius: 8px 8px 0 0; text-shadow: 1px 1px 0 #000; font-size: 13px; }
+        #chat-input { width: 100%; padding: 8px; border: none; background: rgba(0,0,0,0.7); color: white; border-radius: 0 0 8px 8px; outline: none; box-sizing: border-box; font-size: 13px; }
         
         /* MULTIPLAYER STATUS */
-        #mp-status { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); color: #fff; padding: 10px; border-radius: 8px; text-align: right; pointer-events: auto; font-size: 14px; }
-        #mp-status a { color: #00ff00; text-decoration: none; font-weight: bold; word-wrap: break-word; }
+        #mp-status { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); color: #00ffcc; padding: 8px 14px; border-radius: 20px; pointer-events: auto; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 0 #000; }
         
         /* MOBILE TOUCH CONTROLS */
-        #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 130px; height: 130px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; display: none; }
-        #joystick-knob { position: absolute; top: 40px; left: 40px; width: 50px; height: 50px; background: rgba(255,255,255,0.7); border-radius: 50%; pointer-events: none; }
-        #jump-btn { position: absolute; bottom: 40px; right: 40px; width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; border: 3px solid #fff; color: white; font-weight: bold; font-size: 16px; align-items: center; justify-content: center; pointer-events: auto; user-select: none; display: none; }
+        #joystick-zone { position: absolute; bottom: 35px; left: 35px; width: 130px; height: 130px; background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; pointer-events: auto; display: none; }
+        #joystick-knob { position: absolute; top: 40px; left: 40px; width: 50px; height: 50px; background: rgba(255,255,255,0.85); border-radius: 50%; pointer-events: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        #jump-btn { position: absolute; bottom: 45px; right: 35px; width: 85px; height: 85px; background: rgba(255,255,255,0.25); border: 3px solid #fff; border-radius: 50%; color: white; font-weight: 900; font-size: 16px; display: none; align-items: center; justify-content: center; pointer-events: auto; text-shadow: 1px 1px 2px #000; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
-        /* DESKTOP HINTS */
-        #controls-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); color: white; text-shadow: 1px 1px 0 #000; text-align: center; font-size: 14px; pointer-events: none; }
+        /* DESKTOP CONTROLS HINT */
+        #controls-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); color: white; text-shadow: 1px 1px 2px #000; text-align: center; font-size: 13px; pointer-events: none; }
 
-        @media (max-width: 768px) {
-            #joystick-zone, #jump-btn { display: flex; }
+        /* Force touch controls on touch devices or smaller screens */
+        @media (hover: none) and (pointer: coarse), (max-width: 1024px) {
+            #joystick-zone, #jump-btn { display: flex !important; }
             #controls-hint { display: none; }
-            #chat-container { top: 80px; width: 200px; height: 150px; }
-            #mp-status { top: 80px; max-width: 150px; font-size: 12px; }
-            #logo { width: 160px; top: 10px; }
+            #chat-container { top: 70px; width: 220px; height: 150px; }
+            #mp-status { top: 70px; font-size: 11px; }
+            #logo { width: 150px; top: 10px; }
         }
     </style>
 </head>
@@ -45,17 +46,17 @@
     
     <div id="chat-container">
         <div id="chat-messages"></div>
-        <input type="text" id="chat-input" placeholder="Click here to chat...">
+        <input type="text" id="chat-input" placeholder="Tap to chat..." autocomplete="off">
     </div>
     
-    <div id="mp-status">Connecting to Kyublox Multiplayer...</div>
+    <div id="mp-status">Searching for match...</div>
 
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
     <div id="jump-btn">JUMP</div>
 
     <div id="controls-hint">
-        <b>WASD / Arrows</b> to Move | <b>Space</b> to Jump<br>
-        <b>Right-Click + Drag</b> to Orbit Camera | <b>Scroll</b> to Zoom
+        <b>W</b> (Forward) | <b>S</b> (Back) | <b>A</b> (Left) | <b>D</b> (Right)<br>
+        <b>Space</b> to Jump | <b>Right-Click + Drag</b> to Orbit Camera
     </div>
 </div>
 
@@ -65,69 +66,104 @@
 // --- THREE.JS SCENE SETUP ---
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB);
-scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+scene.fog = new THREE.Fog(0x87CEEB, 20, 120);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
 scene.add(ambientLight);
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-dirLight.position.set(20, 50, 20);
+dirLight.position.set(25, 50, 25);
 dirLight.castShadow = true;
 scene.add(dirLight);
 
-// --- R6 RIG GENERATOR ---
+// --- CLEANED & POLISHED R6 RIG GENERATOR ---
 function createR6Rig(colors) {
     const group = new THREE.Group();
-    const matHead = new THREE.MeshStandardMaterial({color: colors.head || 0xf1c27d});
-    const matTorso = new THREE.MeshStandardMaterial({color: colors.torso || 0x0055ff});
-    const matLimbs = new THREE.MeshStandardMaterial({color: colors.limbs || 0xa4cc70});
+    const matHead = new THREE.MeshStandardMaterial({ color: colors.head || 0xf1c27d, roughness: 0.4 });
+    const matTorso = new THREE.MeshStandardMaterial({ color: colors.torso || 0x0055ff, roughness: 0.4 });
+    const matLimbs = new THREE.MeshStandardMaterial({ color: colors.limbs || 0xa4cc70, roughness: 0.4 });
     
-    const head = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), matHead);
-    head.position.y = 1.5; head.castShadow = true; group.add(head);
+    // Head
+    const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), matHead);
+    head.position.y = 2.1;
+    head.castShadow = true;
+    group.add(head);
     
+    // Torso
     const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1), matTorso);
-    torso.position.y = 0; torso.castShadow = true; group.add(torso);
+    torso.position.y = 0.5;
+    torso.castShadow = true;
+    group.add(torso);
     
-    const lArmPivot = new THREE.Group(); lArmPivot.position.set(-1.5, 1, 0);
+    // Left Arm
+    const lArmPivot = new THREE.Group();
+    lArmPivot.position.set(-1.5, 1.4, 0);
     const lArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs);
-    lArm.position.y = -1; lArm.castShadow = true; lArmPivot.add(lArm); group.add(lArmPivot);
+    lArm.position.y = -0.9;
+    lArm.castShadow = true;
+    lArmPivot.add(lArm);
+    group.add(lArmPivot);
     
-    const rArmPivot = new THREE.Group(); rArmPivot.position.set(1.5, 1, 0);
+    // Right Arm
+    const rArmPivot = new THREE.Group();
+    rArmPivot.position.set(1.5, 1.4, 0);
     const rArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs);
-    rArm.position.y = -1; rArm.castShadow = true; rArmPivot.add(rArm); group.add(rArmPivot);
+    rArm.position.y = -0.9;
+    rArm.castShadow = true;
+    rArmPivot.add(rArm);
+    group.add(rArmPivot);
     
-    const lLegPivot = new THREE.Group(); lLegPivot.position.set(-0.5, -1, 0);
-    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs);
-    lLeg.position.y = -1; lLeg.castShadow = true; lLegPivot.add(lLeg); group.add(lLegPivot);
+    // Left Leg
+    const lLegPivot = new THREE.Group();
+    lLegPivot.position.set(-0.55, -0.5, 0);
+    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs);
+    lLeg.position.y = -0.9;
+    lLeg.castShadow = true;
+    lLegPivot.add(lLeg);
+    group.add(lLegPivot);
     
-    const rLegPivot = new THREE.Group(); rLegPivot.position.set(0.5, -1, 0);
-    const rLeg = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs);
-    rLeg.position.y = -1; rLeg.castShadow = true; rLegPivot.add(rLeg); group.add(rLegPivot);
+    // Right Leg
+    const rLegPivot = new THREE.Group();
+    rLegPivot.position.set(0.55, -0.5, 0);
+    const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs);
+    rLeg.position.y = -0.9;
+    rLeg.castShadow = true;
+    rLegPivot.add(rLeg);
+    group.add(rLegPivot);
     
-    group.position.y = 3; 
-    return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot };
+    group.position.set(0, 3, 0); 
+    return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso };
 }
 
-const myPlayer = createR6Rig({torso: 0x0055ff, limbs: 0xa4cc70});
+const myPlayer = createR6Rig({ torso: 0x0055ff, limbs: 0xa4cc70 });
 scene.add(myPlayer.group);
 
-// --- PHYSICS & INPUT ---
-const GRAVITY = -0.015;
-const JUMP_FORCE = 0.35;
+// --- STRICT CONTROLS & INPUT ENGINE ---
+const GRAVITY = -0.018;
+const JUMP_FORCE = 0.38;
 const SPEED = 0.18;
 let velocityY = 0;
 let isGrounded = false;
 
-const input = { forward:0, right:0, jump:false };
+const input = { forward: 0, right: 0, jump: false };
 const keys = {};
 let isChatFocused = false;
 
-// --- CAMERA CONTROLS ---
+// Strictly WASD keyboard controls (Arrow keys support deleted)
+window.addEventListener('keydown', e => { 
+    if (!isChatFocused) keys[e.code] = true; 
+});
+window.addEventListener('keyup', e => { 
+    keys[e.code] = false; 
+});
+
+// CAMERA ORBIT ENGINE
 let camDist = 12;
 let camYaw = 0;
 let camPitch = -0.2;
@@ -135,94 +171,106 @@ let isDragging = false;
 let lastMouseX = 0, lastMouseY = 0;
 
 window.addEventListener('contextmenu', e => e.preventDefault());
-window.addEventListener('mousedown', e => { if(e.button === 2) isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; });
-window.addEventListener('mouseup', e => { if(e.button === 2) isDragging = false; });
+window.addEventListener('mousedown', e => { 
+    if (e.button === 2) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; }
+});
+window.addEventListener('mouseup', e => { if (e.button === 2) isDragging = false; });
 window.addEventListener('mousemove', e => {
-    if(isDragging) {
+    if (isDragging) {
         camYaw -= (e.clientX - lastMouseX) * 0.005;
         camPitch -= (e.clientY - lastMouseY) * 0.005;
-        camPitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, camPitch));
+        camPitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, camPitch));
         lastMouseX = e.clientX; lastMouseY = e.clientY;
     }
 });
-window.addEventListener('wheel', e => { camDist += e.deltaY * 0.02; camDist = Math.max(4, Math.min(30, camDist)); });
+window.addEventListener('wheel', e => { 
+    camDist += e.deltaY * 0.015; 
+    camDist = Math.max(4, Math.min(25, camDist)); 
+});
 
-// Keyboard
-window.addEventListener('keydown', e => { if(!isChatFocused) keys[e.code] = true; });
-window.addEventListener('keyup', e => { keys[e.code] = false; });
-
-// Mobile Touch
+// TOUCH / MOBILE & IPAD ENGINE
 const joyZone = document.getElementById('joystick-zone');
 const joyKnob = document.getElementById('joystick-knob');
-let joyCenter = {x:0, y:0};
+let joyCenter = { x: 0, y: 0 };
 let touchId = null;
+
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    joyZone.style.display = 'flex';
+    document.getElementById('jump-btn').style.display = 'flex';
+    document.getElementById('controls-hint').style.display = 'none';
+}
 
 joyZone.addEventListener('touchstart', e => {
     e.preventDefault();
     const touch = e.changedTouches[0];
     touchId = touch.identifier;
     const rect = joyZone.getBoundingClientRect();
-    joyCenter = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
-    updateJoy(touch);
-}, {passive: false});
+    joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    updateJoystick(touch);
+}, { passive: false });
+
 joyZone.addEventListener('touchmove', e => {
     e.preventDefault();
-    for(let i=0; i<e.changedTouches.length; i++) if(e.changedTouches[i].identifier === touchId) updateJoy(e.changedTouches[i]);
-}, {passive: false});
-joyZone.addEventListener('touchend', e => {
-    e.preventDefault();
-    for(let i=0; i<e.changedTouches.length; i++) {
-        if(e.changedTouches[i].identifier === touchId) {
-            touchId = null; input.forward = 0; input.right = 0;
-            joyKnob.style.transform = `translate(0px, 0px)`;
-        }
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === touchId) updateJoystick(e.changedTouches[i]);
     }
-});
-function updateJoy(touch) {
+}, { passive: false });
+
+function resetJoystick() {
+    touchId = null; input.forward = 0; input.right = 0;
+    joyKnob.style.transform = `translate(0px, 0px)`;
+}
+
+joyZone.addEventListener('touchend', resetJoystick);
+joyZone.addEventListener('touchcancel', resetJoystick);
+
+function updateJoystick(touch) {
     let dx = touch.clientX - joyCenter.x;
     let dy = touch.clientY - joyCenter.y;
-    let dist = Math.sqrt(dx*dx + dy*dy);
+    let dist = Math.sqrt(dx * dx + dy * dy);
     let maxDist = 40;
-    if(dist > maxDist) { dx = (dx/dist)*maxDist; dy = (dy/dist)*maxDist; }
+    if (dist > maxDist) { dx = (dx / dist) * maxDist; dy = (dy / dist) * maxDist; }
     joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
     input.right = dx / maxDist;
     input.forward = -dy / maxDist;
 }
 
 const jumpBtn = document.getElementById('jump-btn');
-jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); input.jump = true; }, {passive:false});
-jumpBtn.addEventListener('touchend', e => { e.preventDefault(); input.jump = false; }, {passive:false});
+jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); input.jump = true; }, { passive: false });
+jumpBtn.addEventListener('touchend', e => { e.preventDefault(); input.jump = false; }, { passive: false });
 
-// --- OBBY MAP GENERATOR ---
+// --- OBBY MAP ---
 const platforms = [];
 const killParts = [];
 function addPart(x, y, z, w, h, d, color, isKill = false) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({color}));
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.5 }));
     mesh.position.set(x, y, z); mesh.receiveShadow = true; mesh.castShadow = true;
     scene.add(mesh);
     const box = new THREE.Box3().setFromObject(mesh);
-    if(isKill) killParts.push(box); else platforms.push(box);
+    if (isKill) killParts.push(box); else platforms.push(box);
 }
 
-// Map Layout
-addPart(0, -1, 0, 12, 2, 12, 0x33aa33); // Spawn
-addPart(0, 1, -15, 5, 1, 5, 0xffffff);  // Jump 1
-addPart(0, 3, -25, 4, 1, 4, 0xffaa00);  // Jump 2
-addPart(10, 4, -25, 4, 1, 4, 0xffaa00); // Jump 3
-addPart(22, 1, -25, 10, 1, 10, 0xff0000, true); // Lava kill brick!
-addPart(22, 6, -25, 3, 1, 3, 0xffffff); // Safe block over lava
-addPart(35, 7, -25, 6, 1, 6, 0x00ff00); // End Checkpoint
+// Stage Layout
+addPart(0, -1, 0, 12, 2, 12, 0x33aa33);
+addPart(0, 1, -14, 5, 1, 5, 0xffffff);
+addPart(0, 3, -24, 4, 1, 4, 0xffaa00);
+addPart(10, 4, -24, 4, 1, 4, 0xffaa00);
+addPart(22, 1, -24, 12, 1, 10, 0xff0000, true);
+addPart(22, 6, -24, 3, 1, 3, 0xffffff);
+addPart(36, 7, -24, 6, 1, 6, 0x00ff00);
 
 function resetPlayer() {
     myPlayer.group.position.set(0, 3, 0);
     velocityY = 0;
 }
 
-// --- MULTIPLAYER & CHAT ---
-const otherPlayers = {}; 
+// --- INSTANT AUTO-JOIN MATCHMAKING ENGINE ---
+const PUBLIC_ROOM_ID = "kyublox-global-public-room-v1";
 const chatMsgs = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const mpStatus = document.getElementById('mp-status');
+const otherPlayers = {};
+const connections = [];
 
 chatInput.addEventListener('focus', () => isChatFocused = true);
 chatInput.addEventListener('blur', () => isChatFocused = false);
@@ -235,156 +283,200 @@ function addChat(name, text) {
 }
 
 chatInput.addEventListener('keypress', e => {
-    if(e.key === 'Enter' && chatInput.value.trim() !== '') {
+    if (e.key === 'Enter' && chatInput.value.trim() !== '') {
         const msg = chatInput.value.trim();
         addChat('Me', msg);
-        broadcast({type: 'chat', msg: msg});
+        broadcast({ type: 'chat', msg: msg });
         chatInput.value = '';
         chatInput.blur();
     }
 });
 
-let peer, myId, conn;
-const connections = []; 
-const urlParams = new URLSearchParams(window.location.search);
-const joinId = urlParams.get('join');
+let myPeer, myId, hostConnection = null;
 
-peer = new Peer(); 
-peer.on('open', id => {
-    myId = id;
-    if(joinId) {
-        mpStatus.innerText = "Joining Host...";
-        conn = peer.connect(joinId);
-        setupConn(conn);
-    } else {
-        const link = window.location.origin + window.location.pathname + '?join=' + id;
-        mpStatus.innerHTML = `You are the Host!<br>Share link: <a href="${link}" target="_blank">Invite Friends</a>`;
-    }
-});
-peer.on('connection', newConn => {
-    connections.push(newConn);
-    setupConn(newConn);
-});
-peer.on('error', err => {
-    mpStatus.innerHTML = `<span style="color:red">Server Error. Playing Offline.</span>`;
-});
+function initAutoMatchmaking() {
+    // Attempt 1: Try connecting as a client to the main public room
+    myPeer = new Peer();
 
-function setupConn(c) {
-    c.on('open', () => { if(joinId) mpStatus.innerText = "Connected to Server!"; });
+    myPeer.on('open', id => {
+        myId = id;
+        const conn = myPeer.connect(PUBLIC_ROOM_ID, { reliable: true });
+        let connected = false;
+
+        conn.on('open', () => {
+            connected = true;
+            hostConnection = conn;
+            mpStatus.innerText = "● Live Online Room";
+            mpStatus.style.color = "#00ff00";
+            setupConnection(conn);
+        });
+
+        // If no host exists after 1.5s, create the empty room and become host
+        setTimeout(() => {
+            if (!connected) {
+                myPeer.destroy();
+                becomeLobbyHost();
+            }
+        }, 1500);
+    });
+
+    myPeer.on('error', () => {
+        becomeLobbyHost();
+    });
+}
+
+function becomeLobbyHost() {
+    myPeer = new Peer(PUBLIC_ROOM_ID);
+
+    myPeer.on('open', id => {
+        myId = id;
+        mpStatus.innerText = "● Empty Room (Lobby Host)";
+        mpStatus.style.color = "#ffff00";
+    });
+
+    myPeer.on('connection', newConn => {
+        connections.push(newConn);
+        setupConnection(newConn);
+        mpStatus.innerText = `● Live Online (${connections.length + 1} Players)`;
+        mpStatus.style.color = "#00ff00";
+    });
+
+    myPeer.on('error', () => {
+        mpStatus.innerText = "Playing Solo";
+        mpStatus.style.color = "#aaaaaa";
+    });
+}
+
+function setupConnection(c) {
     c.on('data', data => {
-        if(!joinId) broadcast(data); // If Host, relay to others
-        if(data.type === 'chat') addChat(data.id.substring(0,5), data.msg);
-        if(data.type === 'pos' && data.id !== myId) {
-            if(!otherPlayers[data.id]) {
-                otherPlayers[data.id] = createR6Rig({torso: Math.random() * 0xffffff, limbs: 0xcccccc});
+        if (hostConnection === null) broadcast(data); // Relay if Host
+        if (data.type === 'chat') addChat(data.id.substring(0, 4), data.msg);
+        if (data.type === 'pos' && data.id !== myId) {
+            if (!otherPlayers[data.id]) {
+                otherPlayers[data.id] = createR6Rig({ torso: Math.random() * 0xffffff, limbs: 0xdddddd });
                 scene.add(otherPlayers[data.id].group);
             }
-            // Smoothly move remote players
-            otherPlayers[data.id].group.position.lerp(new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z), 0.4);
-            otherPlayers[data.id].group.rotation.y = data.rot;
-            animateRig(otherPlayers[data.id], data.animTime, data.isMoving, data.isGrounded);
+            const target = otherPlayers[data.id];
+            target.group.position.lerp(new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z), 0.3);
+            target.group.rotation.y = data.rot;
+            animateRig(target, data.animTime, data.isMoving, data.isGrounded);
         }
     });
     c.on('close', () => {
-        if(otherPlayers[c.peer]) { scene.remove(otherPlayers[c.peer].group); delete otherPlayers[c.peer]; }
+        if (otherPlayers[c.peer]) {
+            scene.remove(otherPlayers[c.peer].group);
+            delete otherPlayers[c.peer];
+        }
     });
 }
 
 function broadcast(data) {
-    if(!data.id) data.id = myId;
-    if(joinId && conn && conn.open) { 
-        conn.send(data); 
-    } else { 
-        connections.forEach(c => { if(c.open && c.peer !== data.id) c.send(data); }); 
+    if (!data.id) data.id = myId;
+    if (hostConnection && hostConnection.open) {
+        hostConnection.send(data);
+    } else {
+        connections.forEach(c => { if (c.open && c.peer !== data.id) c.send(data); });
     }
 }
 
-// --- ANIMATION & MAIN LOOP ---
+initAutoMatchmaking();
+
+// --- FIXED R6 ANIMATION ENGINE ---
+function animateRig(rig, t, moving, grounded) {
+    if (!grounded) {
+        // Jump/Fall pose
+        rig.lArmPivot.rotation.x = THREE.MathUtils.lerp(rig.lArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
+        rig.rArmPivot.rotation.x = THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
+        rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0.3, 0.2);
+        rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, -0.3, 0.2);
+    } else if (moving) {
+        // Natural opposite arm/leg walking swing
+        const swing = Math.sin(t * 13) * 0.7;
+        rig.lArmPivot.rotation.x = swing;
+        rig.rArmPivot.rotation.x = -swing;
+        rig.lLegPivot.rotation.x = -swing;
+        rig.rLegPivot.rotation.x = swing;
+        rig.torso.rotation.z = Math.sin(t * 13) * 0.03; // Subtle torso roll
+    } else {
+        // Idle breathing pose
+        const breath = Math.sin(t * 2.5) * 0.04;
+        rig.lArmPivot.rotation.x = THREE.MathUtils.lerp(rig.lArmPivot.rotation.x, breath, 0.1);
+        rig.rArmPivot.rotation.x = THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -breath, 0.1);
+        rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0, 0.1);
+        rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, 0, 0.1);
+        rig.torso.rotation.z = 0;
+    }
+}
+
+// --- MAIN LOOP ---
 const clock = new THREE.Clock();
 let animTime = 0;
 let lastSync = 0;
-
-function animateRig(rig, t, moving, grounded) {
-    if(!grounded) {
-        rig.lArmPivot.rotation.x = Math.PI; rig.rArmPivot.rotation.x = Math.PI;
-        rig.lLegPivot.rotation.x = -0.2; rig.rLegPivot.rotation.x = 0.2;
-    } else if(moving) {
-        rig.lArmPivot.rotation.x = Math.sin(t * 15) * 1.5;
-        rig.rArmPivot.rotation.x = Math.sin(t * 15 + Math.PI) * 1.5;
-        rig.lLegPivot.rotation.x = Math.sin(t * 15 + Math.PI) * 1.5;
-        rig.rLegPivot.rotation.x = Math.sin(t * 15) * 1.5;
-        rig.group.position.y += Math.sin(t * 30) * 0.05; // Walk bobbing
-    } else {
-        rig.lArmPivot.rotation.x = 0; rig.rArmPivot.rotation.x = 0;
-        rig.lLegPivot.rotation.x = 0; rig.rLegPivot.rotation.x = 0;
-        rig.group.position.y += Math.sin(t * 2) * 0.03; // Idle breathing
-    }
-}
 
 function animate() {
     requestAnimationFrame(animate);
     const dt = clock.getDelta();
     animTime += dt;
     
-    // Mix Desktop + Mobile Input
+    // Strict WASD Mapping
     let fwd = input.forward, rgt = input.right, jmp = input.jump;
-    if(!isChatFocused) {
-        if(keys['KeyW'] || keys['ArrowUp']) fwd += 1;
-        if(keys['KeyS'] || keys['ArrowDown']) fwd -= 1;
-        if(keys['KeyD'] || keys['ArrowRight']) rgt += 1;
-        if(keys['KeyA'] || keys['ArrowLeft']) rgt -= 1;
-        if(keys['Space']) jmp = true;
+    if (!isChatFocused) {
+        if (keys['KeyW']) fwd += 1;
+        if (keys['KeyS']) fwd -= 1;
+        if (keys['KeyD']) rgt += 1;
+        if (keys['KeyA']) rgt -= 1;
+        if (keys['Space']) jmp = true;
     }
 
-    const isMoving = Math.abs(fwd) > 0.1 || Math.abs(rgt) > 0.1;
-    if(isMoving) {
+    const isMoving = Math.abs(fwd) > 0.05 || Math.abs(rgt) > 0.05;
+    if (isMoving) {
         const inputAngle = Math.atan2(rgt, fwd);
         const moveAngle = camYaw + inputAngle;
         myPlayer.group.position.x += Math.sin(moveAngle) * SPEED;
         myPlayer.group.position.z += -Math.cos(moveAngle) * SPEED;
         
         let rotDiff = moveAngle - myPlayer.group.rotation.y;
-        while(rotDiff > Math.PI) rotDiff -= Math.PI * 2;
-        while(rotDiff < -Math.PI) rotDiff += Math.PI * 2;
-        myPlayer.group.rotation.y += rotDiff * 0.2;
+        while (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
+        while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
+        myPlayer.group.rotation.y += rotDiff * 0.25;
     }
 
     velocityY += GRAVITY;
     myPlayer.group.position.y += velocityY;
     
-    // Custom Box Collision Engine
+    // Player Hitbox
     const playerBox = new THREE.Box3();
     playerBox.setFromCenterAndSize(
-        new THREE.Vector3(myPlayer.group.position.x, myPlayer.group.position.y - 0.5, myPlayer.group.position.z),
-        new THREE.Vector3(2, 5, 2)
+        new THREE.Vector3(myPlayer.group.position.x, myPlayer.group.position.y, myPlayer.group.position.z),
+        new THREE.Vector3(1.8, 3.8, 1.8)
     );
     
     isGrounded = false;
-    for(let kp of killParts) if(kp.intersectsBox(playerBox)) { resetPlayer(); break; }
+    for (let kp of killParts) if (kp.intersectsBox(playerBox)) { resetPlayer(); break; }
     
-    for(let plat of platforms) {
-        if(plat.intersectsBox(playerBox) && velocityY < 0 && playerBox.min.y > plat.max.y - 1.2) {
-            myPlayer.group.position.y = plat.max.y + 3;
+    for (let plat of platforms) {
+        if (plat.intersectsBox(playerBox) && velocityY <= 0 && playerBox.min.y > plat.max.y - 1.2) {
+            myPlayer.group.position.y = plat.max.y + 2.4;
             velocityY = 0;
             isGrounded = true;
         }
     }
     
-    if(myPlayer.group.position.y < -30) resetPlayer();
-    if(jmp && isGrounded) velocityY = JUMP_FORCE;
+    if (myPlayer.group.position.y < -30) resetPlayer();
+    if (jmp && isGrounded) velocityY = JUMP_FORCE;
 
     animateRig(myPlayer, animTime, isMoving, isGrounded);
 
-    // Orbit Camera Math
+    // Smooth Camera Follow
     const camTarget = myPlayer.group.position.clone();
-    camTarget.y += 1; // Focus near head
+    camTarget.y += 1.2;
     camera.position.x = camTarget.x - Math.sin(camYaw) * Math.cos(camPitch) * camDist;
     camera.position.y = camTarget.y - Math.sin(camPitch) * camDist;
     camera.position.z = camTarget.z - Math.cos(camYaw) * Math.cos(camPitch) * camDist;
     camera.lookAt(camTarget);
 
-    // Network Broadcasting (~10 frames a second)
-    if(animTime - lastSync > 0.1) {
+    // Sync position over network
+    if (animTime - lastSync > 0.08) {
         lastSync = animTime;
         broadcast({ type: 'pos', pos: myPlayer.group.position, rot: myPlayer.group.rotation.y, animTime, isMoving, isGrounded });
     }
