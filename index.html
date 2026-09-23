@@ -356,7 +356,7 @@ function createR6Rig(avatarData, hasSword = false) {
     const matTorsoBase = new THREE.MeshStandardMaterial({ color: cTorso, roughness: 0.4 });
     const matLimbs = new THREE.MeshStandardMaterial({ color: new THREE.Color(avatarData.limbs || '#a4cc70'), roughness: 0.4 });
     
-    // HEAD SETUP (Rotated backwards)
+    // HEAD SETUP (Normal forward-facing orientation)
     let headMats = [matSkin, matSkin, matSkin, matSkin, matSkin, matSkin];
     if (avatarData.face) { 
         const faceTex = texLoader.load(avatarData.face); faceTex.magFilter = THREE.NearestFilter; 
@@ -364,7 +364,7 @@ function createR6Rig(avatarData, hasSword = false) {
     }
     const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), headMats); 
     head.position.y = 2.1; 
-    head.rotation.y = Math.PI; // FLIPPED HEAD BACKWARDS AS REQUESTED
+    head.rotation.y = 0; // NORMAL FORWARD HEAD
     head.castShadow = true; 
     group.add(head);
 
@@ -691,11 +691,17 @@ function animate() {
 
     let fwd = input.forward, rgt = input.right, jmp = input.jump;
     if (!isChatFocused) {
-        // EXPLICIT WASD CAMERA-RELATIVE CONTROLS 
-        if (keys['KeyW']) fwd += 1;  // W = Forwards
-        if (keys['KeyS']) fwd -= 1;  // S = Backwards
-        if (keys['KeyD']) rgt += 1;  // D = Right
-        if (keys['KeyA']) rgt -= 1;  // A = Left
+        // CLEAN EXPLICIT CAMERA-RELATIVE WASD CONTROLS
+        let keyFwd = 0, keyRgt = 0;
+        if (keys['KeyW']) keyFwd += 1; // W = Forwards
+        if (keys['KeyS']) keyFwd -= 1; // S = Backwards
+        if (keys['KeyD']) keyRgt += 1; // D = Right
+        if (keys['KeyA']) keyRgt -= 1; // A = Left
+        
+        if (keyFwd !== 0 || keyRgt !== 0) {
+            fwd = keyFwd;
+            rgt = keyRgt;
+        }
         if (keys['Space']) jmp = true;
     }
     const isMoving = Math.abs(fwd) > 0.05 || Math.abs(rgt) > 0.05;
@@ -703,7 +709,7 @@ function animate() {
     if (isMoving) {
         const inputAngle = Math.atan2(rgt, fwd); const moveAngle = camYaw + inputAngle;
         myPlayer.group.position.x += Math.sin(moveAngle) * SPEED; myPlayer.group.position.z += -Math.cos(moveAngle) * SPEED;
-        const targetRot = moveAngle + Math.PI; let rotDiff = targetRot - myPlayer.group.rotation.y;
+        const targetRot = moveAngle; let rotDiff = targetRot - myPlayer.group.rotation.y;
         while (rotDiff > Math.PI) rotDiff -= Math.PI * 2; while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
         myPlayer.group.rotation.y += rotDiff * 0.25;
         if(isGrounded && wSnd.paused) wSnd.play().catch(()=>{});
