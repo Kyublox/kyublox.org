@@ -29,7 +29,6 @@
         /* DESKTOP CONTROLS HINT */
         #controls-hint { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); color: white; text-shadow: 1px 1px 2px #000; text-align: center; font-size: 13px; pointer-events: none; }
 
-        /* Force touch controls on touch devices or smaller screens */
         @media (hover: none) and (pointer: coarse), (max-width: 1024px) {
             #joystick-zone, #jump-btn { display: flex !important; }
             #controls-hint { display: none; }
@@ -63,7 +62,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script>
-// --- THREE.JS SCENE SETUP ---
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB);
 scene.fog = new THREE.Fog(0x87CEEB, 20, 120);
@@ -82,60 +80,34 @@ dirLight.position.set(25, 50, 25);
 dirLight.castShadow = true;
 scene.add(dirLight);
 
-// --- CLEANED & POLISHED R6 RIG GENERATOR ---
+// --- R6 RIG GENERATOR ---
 function createR6Rig(colors) {
     const group = new THREE.Group();
     const matHead = new THREE.MeshStandardMaterial({ color: colors.head || 0xf1c27d, roughness: 0.4 });
     const matTorso = new THREE.MeshStandardMaterial({ color: colors.torso || 0x0055ff, roughness: 0.4 });
     const matLimbs = new THREE.MeshStandardMaterial({ color: colors.limbs || 0xa4cc70, roughness: 0.4 });
     
-    // Head
     const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), matHead);
-    head.position.y = 2.1;
-    head.castShadow = true;
-    group.add(head);
+    head.position.y = 2.1; head.castShadow = true; group.add(head);
     
-    // Torso
     const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1), matTorso);
-    torso.position.y = 0.5;
-    torso.castShadow = true;
-    group.add(torso);
+    torso.position.y = 0.5; torso.castShadow = true; group.add(torso);
     
-    // Left Arm
-    const lArmPivot = new THREE.Group();
-    lArmPivot.position.set(-1.5, 1.4, 0);
+    const lArmPivot = new THREE.Group(); lArmPivot.position.set(-1.5, 1.4, 0);
     const lArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs);
-    lArm.position.y = -0.9;
-    lArm.castShadow = true;
-    lArmPivot.add(lArm);
-    group.add(lArmPivot);
+    lArm.position.y = -0.9; lArm.castShadow = true; lArmPivot.add(lArm); group.add(lArmPivot);
     
-    // Right Arm
-    const rArmPivot = new THREE.Group();
-    rArmPivot.position.set(1.5, 1.4, 0);
+    const rArmPivot = new THREE.Group(); rArmPivot.position.set(1.5, 1.4, 0);
     const rArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs);
-    rArm.position.y = -0.9;
-    rArm.castShadow = true;
-    rArmPivot.add(rArm);
-    group.add(rArmPivot);
+    rArm.position.y = -0.9; rArm.castShadow = true; rArmPivot.add(rArm); group.add(rArmPivot);
     
-    // Left Leg
-    const lLegPivot = new THREE.Group();
-    lLegPivot.position.set(-0.55, -0.5, 0);
+    const lLegPivot = new THREE.Group(); lLegPivot.position.set(-0.55, -0.5, 0);
     const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs);
-    lLeg.position.y = -0.9;
-    lLeg.castShadow = true;
-    lLegPivot.add(lLeg);
-    group.add(lLegPivot);
+    lLeg.position.y = -0.9; lLeg.castShadow = true; lLegPivot.add(lLeg); group.add(lLegPivot);
     
-    // Right Leg
-    const rLegPivot = new THREE.Group();
-    rLegPivot.position.set(0.55, -0.5, 0);
+    const rLegPivot = new THREE.Group(); rLegPivot.position.set(0.55, -0.5, 0);
     const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs);
-    rLeg.position.y = -0.9;
-    rLeg.castShadow = true;
-    rLegPivot.add(rLeg);
-    group.add(rLegPivot);
+    rLeg.position.y = -0.9; rLeg.castShadow = true; rLegPivot.add(rLeg); group.add(rLegPivot);
     
     group.position.set(0, 3, 0); 
     return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso };
@@ -155,38 +127,28 @@ const input = { forward: 0, right: 0, jump: false };
 const keys = {};
 let isChatFocused = false;
 
-// Strictly WASD keyboard controls (Arrow keys support deleted)
-window.addEventListener('keydown', e => { 
-    if (!isChatFocused) keys[e.code] = true; 
-});
-window.addEventListener('keyup', e => { 
-    keys[e.code] = false; 
-});
+window.addEventListener('keydown', e => { if (!isChatFocused) keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 // CAMERA ORBIT ENGINE
 let camDist = 12;
 let camYaw = 0;
-let camPitch = -0.2;
+let camPitch = 0.2; // Fixed default camera angle
 let isDragging = false;
 let lastMouseX = 0, lastMouseY = 0;
 
 window.addEventListener('contextmenu', e => e.preventDefault());
-window.addEventListener('mousedown', e => { 
-    if (e.button === 2) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; }
-});
+window.addEventListener('mousedown', e => { if (e.button === 2) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; }});
 window.addEventListener('mouseup', e => { if (e.button === 2) isDragging = false; });
 window.addEventListener('mousemove', e => {
     if (isDragging) {
         camYaw -= (e.clientX - lastMouseX) * 0.005;
-        camPitch -= (e.clientY - lastMouseY) * 0.005;
-        camPitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, camPitch));
+        camPitch += (e.clientY - lastMouseY) * 0.005; // Drag down goes up
+        camPitch = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, camPitch)); // Don't clip underground
         lastMouseX = e.clientX; lastMouseY = e.clientY;
     }
 });
-window.addEventListener('wheel', e => { 
-    camDist += e.deltaY * 0.015; 
-    camDist = Math.max(4, Math.min(25, camDist)); 
-});
+window.addEventListener('wheel', e => { camDist += e.deltaY * 0.015; camDist = Math.max(4, Math.min(25, camDist)); });
 
 // TOUCH / MOBILE & IPAD ENGINE
 const joyZone = document.getElementById('joystick-zone');
@@ -220,7 +182,6 @@ function resetJoystick() {
     touchId = null; input.forward = 0; input.right = 0;
     joyKnob.style.transform = `translate(0px, 0px)`;
 }
-
 joyZone.addEventListener('touchend', resetJoystick);
 joyZone.addEventListener('touchcancel', resetJoystick);
 
@@ -232,7 +193,7 @@ function updateJoystick(touch) {
     if (dist > maxDist) { dx = (dx / dist) * maxDist; dy = (dy / dist) * maxDist; }
     joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
     input.right = dx / maxDist;
-    input.forward = -dy / maxDist;
+    input.forward = -dy / maxDist; // Up is forward
 }
 
 const jumpBtn = document.getElementById('jump-btn');
@@ -250,7 +211,6 @@ function addPart(x, y, z, w, h, d, color, isKill = false) {
     if (isKill) killParts.push(box); else platforms.push(box);
 }
 
-// Stage Layout
 addPart(0, -1, 0, 12, 2, 12, 0x33aa33);
 addPart(0, 1, -14, 5, 1, 5, 0xffffff);
 addPart(0, 3, -24, 4, 1, 4, 0xffaa00);
@@ -264,7 +224,7 @@ function resetPlayer() {
     velocityY = 0;
 }
 
-// --- INSTANT AUTO-JOIN MATCHMAKING ENGINE ---
+// --- MULTIPLAYER ---
 const PUBLIC_ROOM_ID = "kyublox-global-public-room-v1";
 const chatMsgs = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -295,61 +255,37 @@ chatInput.addEventListener('keypress', e => {
 let myPeer, myId, hostConnection = null;
 
 function initAutoMatchmaking() {
-    // Attempt 1: Try connecting as a client to the main public room
     myPeer = new Peer();
-
     myPeer.on('open', id => {
         myId = id;
         const conn = myPeer.connect(PUBLIC_ROOM_ID, { reliable: true });
         let connected = false;
-
         conn.on('open', () => {
-            connected = true;
-            hostConnection = conn;
-            mpStatus.innerText = "● Live Online Room";
-            mpStatus.style.color = "#00ff00";
+            connected = true; hostConnection = conn;
+            mpStatus.innerText = "● Live Online Room"; mpStatus.style.color = "#00ff00";
             setupConnection(conn);
         });
-
-        // If no host exists after 1.5s, create the empty room and become host
-        setTimeout(() => {
-            if (!connected) {
-                myPeer.destroy();
-                becomeLobbyHost();
-            }
-        }, 1500);
+        setTimeout(() => { if (!connected) { myPeer.destroy(); becomeLobbyHost(); } }, 1500);
     });
-
-    myPeer.on('error', () => {
-        becomeLobbyHost();
-    });
+    myPeer.on('error', () => becomeLobbyHost());
 }
 
 function becomeLobbyHost() {
     myPeer = new Peer(PUBLIC_ROOM_ID);
-
     myPeer.on('open', id => {
         myId = id;
-        mpStatus.innerText = "● Empty Room (Lobby Host)";
-        mpStatus.style.color = "#ffff00";
+        mpStatus.innerText = "● Empty Room (Lobby Host)"; mpStatus.style.color = "#ffff00";
     });
-
     myPeer.on('connection', newConn => {
-        connections.push(newConn);
-        setupConnection(newConn);
-        mpStatus.innerText = `● Live Online (${connections.length + 1} Players)`;
-        mpStatus.style.color = "#00ff00";
+        connections.push(newConn); setupConnection(newConn);
+        mpStatus.innerText = `● Live Online (${connections.length + 1} Players)`; mpStatus.style.color = "#00ff00";
     });
-
-    myPeer.on('error', () => {
-        mpStatus.innerText = "Playing Solo";
-        mpStatus.style.color = "#aaaaaa";
-    });
+    myPeer.on('error', () => { mpStatus.innerText = "Playing Solo"; mpStatus.style.color = "#aaaaaa"; });
 }
 
 function setupConnection(c) {
     c.on('data', data => {
-        if (hostConnection === null) broadcast(data); // Relay if Host
+        if (hostConnection === null) broadcast(data); 
         if (data.type === 'chat') addChat(data.id.substring(0, 4), data.msg);
         if (data.type === 'pos' && data.id !== myId) {
             if (!otherPlayers[data.id]) {
@@ -362,43 +298,29 @@ function setupConnection(c) {
             animateRig(target, data.animTime, data.isMoving, data.isGrounded);
         }
     });
-    c.on('close', () => {
-        if (otherPlayers[c.peer]) {
-            scene.remove(otherPlayers[c.peer].group);
-            delete otherPlayers[c.peer];
-        }
-    });
+    c.on('close', () => { if (otherPlayers[c.peer]) { scene.remove(otherPlayers[c.peer].group); delete otherPlayers[c.peer]; } });
 }
 
 function broadcast(data) {
     if (!data.id) data.id = myId;
-    if (hostConnection && hostConnection.open) {
-        hostConnection.send(data);
-    } else {
-        connections.forEach(c => { if (c.open && c.peer !== data.id) c.send(data); });
-    }
+    if (hostConnection && hostConnection.open) hostConnection.send(data);
+    else connections.forEach(c => { if (c.open && c.peer !== data.id) c.send(data); });
 }
-
 initAutoMatchmaking();
 
-// --- FIXED R6 ANIMATION ENGINE ---
+// --- ANIMATION ENGINE ---
 function animateRig(rig, t, moving, grounded) {
     if (!grounded) {
-        // Jump/Fall pose
         rig.lArmPivot.rotation.x = THREE.MathUtils.lerp(rig.lArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
         rig.rArmPivot.rotation.x = THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
         rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0.3, 0.2);
         rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, -0.3, 0.2);
     } else if (moving) {
-        // Natural opposite arm/leg walking swing
         const swing = Math.sin(t * 13) * 0.7;
-        rig.lArmPivot.rotation.x = swing;
-        rig.rArmPivot.rotation.x = -swing;
-        rig.lLegPivot.rotation.x = -swing;
-        rig.rLegPivot.rotation.x = swing;
-        rig.torso.rotation.z = Math.sin(t * 13) * 0.03; // Subtle torso roll
+        rig.lArmPivot.rotation.x = swing; rig.rArmPivot.rotation.x = -swing;
+        rig.lLegPivot.rotation.x = -swing; rig.rLegPivot.rotation.x = swing;
+        rig.torso.rotation.z = Math.sin(t * 13) * 0.03;
     } else {
-        // Idle breathing pose
         const breath = Math.sin(t * 2.5) * 0.04;
         rig.lArmPivot.rotation.x = THREE.MathUtils.lerp(rig.lArmPivot.rotation.x, breath, 0.1);
         rig.rArmPivot.rotation.x = THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -breath, 0.1);
@@ -418,7 +340,6 @@ function animate() {
     const dt = clock.getDelta();
     animTime += dt;
     
-    // Strict WASD Mapping
     let fwd = input.forward, rgt = input.right, jmp = input.jump;
     if (!isChatFocused) {
         if (keys['KeyW']) fwd += 1;
@@ -435,7 +356,9 @@ function animate() {
         myPlayer.group.position.x += Math.sin(moveAngle) * SPEED;
         myPlayer.group.position.z += -Math.cos(moveAngle) * SPEED;
         
-        let rotDiff = moveAngle - myPlayer.group.rotation.y;
+        // Correctly face the direction of movement
+        const targetRot = moveAngle + Math.PI; 
+        let rotDiff = targetRot - myPlayer.group.rotation.y;
         while (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
         while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
         myPlayer.group.rotation.y += rotDiff * 0.25;
@@ -444,7 +367,7 @@ function animate() {
     velocityY += GRAVITY;
     myPlayer.group.position.y += velocityY;
     
-    // Player Hitbox
+    // Fixed Player Hitbox
     const playerBox = new THREE.Box3();
     playerBox.setFromCenterAndSize(
         new THREE.Vector3(myPlayer.group.position.x, myPlayer.group.position.y, myPlayer.group.position.z),
@@ -455,8 +378,9 @@ function animate() {
     for (let kp of killParts) if (kp.intersectsBox(playerBox)) { resetPlayer(); break; }
     
     for (let plat of platforms) {
-        if (plat.intersectsBox(playerBox) && velocityY <= 0 && playerBox.min.y > plat.max.y - 1.2) {
-            myPlayer.group.position.y = plat.max.y + 2.4;
+        // Tightened snap tolerance to fix the hover/flapping bug
+        if (plat.intersectsBox(playerBox) && velocityY <= 0 && playerBox.min.y > plat.max.y - 1.0) {
+            myPlayer.group.position.y = plat.max.y + 1.9; 
             velocityY = 0;
             isGrounded = true;
         }
@@ -467,15 +391,14 @@ function animate() {
 
     animateRig(myPlayer, animTime, isMoving, isGrounded);
 
-    // Smooth Camera Follow
+    // Fixed Orbit Camera Math (Placing it correctly behind you)
     const camTarget = myPlayer.group.position.clone();
     camTarget.y += 1.2;
-    camera.position.x = camTarget.x - Math.sin(camYaw) * Math.cos(camPitch) * camDist;
-    camera.position.y = camTarget.y - Math.sin(camPitch) * camDist;
-    camera.position.z = camTarget.z - Math.cos(camYaw) * Math.cos(camPitch) * camDist;
+    camera.position.x = camTarget.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
+    camera.position.y = camTarget.y + Math.sin(camPitch) * camDist;
+    camera.position.z = camTarget.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
     camera.lookAt(camTarget);
 
-    // Sync position over network
     if (animTime - lastSync > 0.08) {
         lastSync = animTime;
         broadcast({ type: 'pos', pos: myPlayer.group.position, rot: myPlayer.group.rotation.y, animTime, isMoving, isGrounded });
