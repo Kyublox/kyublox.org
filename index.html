@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voxel - Basic Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling on canvas */
+            background-color: #87CEEB; /* Sky blue background fallback */
+        }
+        #game-canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none; /* Let clicks pass through to the game if needed */
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="ui-layer" class="bg-black/50 text-white p-6 rounded-lg shadow-lg font-sans backdrop-blur-sm">
+        <h1 class="text-3xl font-bold mb-2 tracking-wider">VOXEL Engine</h1>
+        <p class="text-sm opacity-80 mb-4">Pre-alpha Prototype v0.1</p>
+        
+        <div class="space-y-2 text-sm">
+            <div class="flex items-center gap-3">
+                <span class="bg-white/20 px-2 py-1 rounded font-mono">W A S D</span>
+                <span>Move</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="bg-white/20 px-2 py-1 rounded font-mono">SPACE</span>
+                <span>Jump</span>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <script>
+        // Game Constants
+        const PLAYER_SPEED = 0.15;
+        const JUMP_STRENGTH = 0.4;
+        const GRAVITY = -0.02;
+        const PLAYER_SIZE = 1;
+
+        // Key tracking
+        const keys = {
+            w: false,
+            a: false,
+            s: false,
+            d: false,
+            space: false
+        };
+
+        let scene, camera, renderer;
+        let player, baseplate;
+        let velocityY = 0;
+        let isJumping = false;
+
+        // Start the engine
+        window.onload = init;
+
+        function init() {
+            const canvas = document.getElementById('game-canvas');
+
+            // 1. Scene Setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // Sky blue
+            scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+
+            // 2. Camera Setup
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            // 3. Renderer Setup
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            // 4. Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(50, 100, 50);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.top = 50;
+            dirLight.shadow.camera.bottom = -50;
+            dirLight.shadow.camera.left = -50;
+            dirLight.shadow.camera.right = 50;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+            // 5. Baseplate (The Ground)
+            const groundGeo = new THREE.PlaneGeometry(200, 200);
+            const groundMat = new THREE.MeshLambertMaterial({ color: 0x4C9A2A }); // Grass green
+            baseplate = new THREE.Mesh(groundGeo, groundMat);
+            baseplate.rotation.x = -Math.PI / 2; // Lay flat
+            baseplate.receiveShadow = true;
+            scene.add(baseplate);
+
+            // Add a subtle grid helper to make it look like a building baseplate
+            const gridHelper = new THREE.GridHelper(200, 100, 0x000000, 0x000000);
+            gridHelper.material.opacity = 0.1;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            // 6. Player (The Blue Cube)
+            const playerGeo = new THREE.BoxGeometry(PLAYER_SIZE, PLAYER_SIZE, PLAYER_SIZE);
+            const playerMat = new THREE.MeshLambertMaterial({ color: 0x2A52BE }); // Cobalt blue
+            player = new THREE.Mesh(playerGeo, playerMat);
+            player.castShadow = true;
+            
+            // Position player resting on top of the baseplate
+            player.position.set(0, PLAYER_SIZE / 2, 0); 
+            scene.add(player);
+
+            // 7. Event Listeners
+            setupControls();
+            window.addEventListener('resize', onWindowResize, false);
+
+            // 8. Start Loop
+            animate();
+        }
+
+        function setupControls() {
+            document.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                if (key === 'w' || e.key === 'ArrowUp') keys.w = true;
+                if (key === 'a' || e.key === 'ArrowLeft') keys.a = true;
+                if (key === 's' || e.key === 'ArrowDown') keys.s = true;
+                if (key === 'd' || e.key === 'ArrowRight') keys.d = true;
+                if (key === ' ' && !isJumping) keys.space = true;
+            });
+
+            document.addEventListener('keyup', (e) => {
+                const key = e.key.toLowerCase();
+                if (key === 'w' || e.key === 'ArrowUp') keys.w = false;
+                if (key === 'a' || e.key === 'ArrowLeft') keys.a = false;
+                if (key === 's' || e.key === 'ArrowDown') keys.s = false;
+                if (key === 'd' || e.key === 'ArrowRight') keys.d = false;
+                if (key === ' ') keys.space = false;
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Movement logic (Relative to world axes for simple demo)
+            if (keys.w) player.position.z -= PLAYER_SPEED;
+            if (keys.s) player.position.z += PLAYER_SPEED;
+            if (keys.a) player.position.x -= PLAYER_SPEED;
+            if (keys.d) player.position.x += PLAYER_SPEED;
+
+            // Jump logic initialization
+            if (keys.space && !isJumping) {
+                velocityY = JUMP_STRENGTH;
+                isJumping = true;
+                keys.space = false; // Prevent holding down to fly
+            }
+
+            // Apply Gravity
+            velocityY += GRAVITY;
+            player.position.y += velocityY;
+
+            // Collision with Ground (y = 0)
+            const groundLevel = PLAYER_SIZE / 2; // Center of the cube when resting on floor
+            if (player.position.y <= groundLevel) {
+                player.position.y = groundLevel;
+                velocityY = 0;
+                isJumping = false;
+            }
+
+            // Camera follow logic (Third-person view behind and slightly above)
+            const cameraOffset = new THREE.Vector3(0, 5, 12);
+            camera.position.x = player.position.x + cameraOffset.x;
+            camera.position.y = player.position.y + cameraOffset.y;
+            camera.position.z = player.position.z + cameraOffset.z;
+            camera.lookAt(player.position);
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>
