@@ -299,7 +299,7 @@ function openCustomize() {
 
 function moderateImage(url) {
     if (!url) return true;
-    const badWords = ['nsfw', 'porn', 'banned', 'offensive', 'badword', 'blood']; // Simulated moderation filter
+    const badWords = ['nsfw', 'porn', 'banned', 'offensive', 'badword', 'blood'];
     const lowerUrl = url.toLowerCase();
     for (let word of badWords) {
         if (lowerUrl.includes(word)) return false;
@@ -356,21 +356,21 @@ function createR6Rig(avatarData, hasSword = false) {
     const matTorsoBase = new THREE.MeshStandardMaterial({ color: cTorso, roughness: 0.4 });
     const matLimbs = new THREE.MeshStandardMaterial({ color: new THREE.Color(avatarData.limbs || '#a4cc70'), roughness: 0.4 });
     
-    // HEAD SETUP (Uncorrected head orientation rotation restored)
+    // Rig origin (0,0,0) is at the feet.
+    // Head setup (Y: 3.6 to 4.8)
     let headMats = [matSkin, matSkin, matSkin, matSkin, matSkin, matSkin];
     if (avatarData.face) { 
         const faceTex = texLoader.load(avatarData.face); faceTex.magFilter = THREE.NearestFilter; 
         headMats[4] = new THREE.MeshStandardMaterial({ color: cHead, map: faceTex, transparent: true }); 
     }
     const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), headMats); 
-    head.position.y = 2.1; 
-    head.rotation.y = Math.PI; // Uncorrected head rotation
+    head.position.y = 4.2; 
+    head.rotation.y = Math.PI; 
     head.castShadow = true; 
     group.add(head);
 
-    // TORSO SETUP (Images on Front and Back)
+    // Torso setup (Y: 2.0 to 4.0)
     let torsoMats = [matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase];
-    
     if (avatarData.frontDecal) {
         const fTex = texLoader.load(avatarData.frontDecal);
         torsoMats[4] = new THREE.MeshStandardMaterial({ color: cTorso, map: fTex });
@@ -379,23 +379,23 @@ function createR6Rig(avatarData, hasSword = false) {
         const bTex = texLoader.load(avatarData.backDecal);
         torsoMats[5] = new THREE.MeshStandardMaterial({ color: cTorso, map: bTex });
     }
-
     const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1), torsoMats); 
-    torso.position.y = 0.5; torso.castShadow = true; group.add(torso);
+    torso.position.y = 3.0; torso.castShadow = true; group.add(torso);
     
-    // LIMBS
-    const lArmPivot = new THREE.Group(); lArmPivot.position.set(-1.5, 1.4, 0);
+    // Limbs pivots and meshes
+    const lArmPivot = new THREE.Group(); lArmPivot.position.set(-1.5, 3.9, 0);
     const lArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs); lArm.position.y = -0.9; lArm.castShadow = true; lArmPivot.add(lArm); group.add(lArmPivot);
     
-    const rArmPivot = new THREE.Group(); rArmPivot.position.set(1.5, 1.4, 0);
+    const rArmPivot = new THREE.Group(); rArmPivot.position.set(1.5, 3.9, 0);
     const rArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs); rArm.position.y = -0.9; rArm.castShadow = true; rArmPivot.add(rArm); group.add(rArmPivot);
     
-    const lLegPivot = new THREE.Group(); lLegPivot.position.set(-0.55, -0.5, 0);
+    const lLegPivot = new THREE.Group(); lLegPivot.position.set(-0.55, 2.0, 0);
     const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs); lLeg.position.y = -0.9; lLeg.castShadow = true; lLegPivot.add(lLeg); group.add(lLegPivot);
     
-    const rLegPivot = new THREE.Group(); rLegPivot.position.set(0.55, -0.5, 0);
+    const rLegPivot = new THREE.Group(); rLegPivot.position.set(0.55, 2.0, 0);
     const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs); rLeg.position.y = -0.9; rLeg.castShadow = true; rLegPivot.add(rLeg); group.add(rLegPivot);
-    group.position.set(0, 3, 0); 
+    
+    group.position.set(0, 0, 0); 
     
     // Sword Tool
     if (hasSword) {
@@ -412,7 +412,7 @@ function createR6Rig(avatarData, hasSword = false) {
     const ctx = canvas.getContext('2d'); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,256,64);
     ctx.font = 'bold 30px Arial'; ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.fillText(avatarData.username || 'Player', 128, 42);
     const ntMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
-    ntMesh.position.y = 3.2; ntMesh.scale.set(3, 0.75, 1); group.add(ntMesh);
+    ntMesh.position.y = 5.3; ntMesh.scale.set(3, 0.75, 1); group.add(ntMesh);
 
     return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso, colors: avatarData, isDancing: false };
 }
@@ -428,10 +428,10 @@ function addPart(x, y, z, w, h, d, color, isKill = false) {
 function buildHouse(cx, cz) {
     addPart(cx, 0, cz, 12, 1, 12, 0x8B4513); // Floor
     addPart(cx, 4, cz-5.5, 12, 8, 1, 0xeeddcc); // Back wall
-    addPart(cx-5.5, 4, cz, 1, 8, 10, 0xeeddcc); // Left
-    addPart(cx+5.5, 4, cz, 1, 8, 10, 0xeeddcc); // Right
-    addPart(cx-3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); // Front Left
-    addPart(cx+3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); // Front Right
+    addPart(cx-5.5, 4, cz, 1, 8, 10, 0xeeddcc); // Left wall
+    addPart(cx+5.5, 4, cz, 1, 8, 10, 0xeeddcc); // Right wall
+    addPart(cx-3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); // Front Left wall
+    addPart(cx+3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); // Front Right wall
     addPart(cx, 6.5, cz+5.5, 2, 3, 1, 0xeeddcc); // Door Top
     addPart(cx, 8.5, cz, 13, 1, 13, 0x555555); // Roof
 }
@@ -455,24 +455,33 @@ function joinGame(type) {
     if (type === 'baseplate') {
         addPart(0, -1, 0, 100, 2, 100, 0x33aa33);
     } else if (type === 'obby') {
-        addPart(0, -1, 0, 12, 2, 12, 0x33aa33); addPart(0, 1, -14, 5, 1, 5, 0xffffff);
-        addPart(0, 3, -24, 4, 1, 4, 0xffaa00); addPart(22, 1, -24, 12, 1, 10, 0xff0000, true); addPart(36, 7, -24, 6, 1, 6, 0x00ff00);
+        addPart(0, -1, 0, 12, 2, 12, 0x33aa33); 
+        addPart(0, 1, -14, 5, 1, 5, 0xffffff);
+        addPart(0, 3, -24, 4, 1, 4, 0xffaa00); 
+        addPart(22, 1, -24, 12, 1, 10, 0xff0000, true); 
+        addPart(36, 7, -24, 6, 1, 6, 0x00ff00);
     } else if (type === 'sfoth') {
         hasSword = true;
-        addPart(0, -1, 0, 30, 2, 30, 0x333333); addPart(20, 10, 20, 15, 2, 15, 0x228B22);
-        addPart(-25, 20, -10, 20, 2, 20, 0x228B22); addPart(10, 5, 10, 4, 10, 4, 0x555555);
+        addPart(0, -1, 0, 30, 2, 30, 0x333333); 
+        addPart(20, 10, 20, 15, 2, 15, 0x228B22);
+        addPart(-25, 20, -10, 20, 2, 20, 0x228B22); 
+        addPart(10, 5, 10, 4, 10, 4, 0x555555);
         document.getElementById('snd-bgm').play().catch(e=>console.log("Audio play blocked"));
     } else if (type === 'neighborhood') {
         addPart(0, -1, 0, 200, 2, 200, 0x33aa33);
         for(let i=0; i<30; i++) buildHouse((i%6)*30 - 75, Math.floor(i/6)*30 - 60);
     } else if (type === 'bombs') {
         addPart(0, -1, 0, 80, 2, 80, 0x555555); 
-        addPart(0, 5, -40, 80, 10, 2, 0x8B4513); addPart(0, 5, 40, 80, 10, 2, 0x8B4513); 
-        addPart(-40, 5, 0, 2, 10, 80, 0x8B4513); addPart(40, 5, 0, 2, 10, 80, 0x8B4513);
+        addPart(0, 5, -40, 80, 10, 2, 0x8B4513); 
+        addPart(0, 5, 40, 80, 10, 2, 0x8B4513); 
+        addPart(-40, 5, 0, 2, 10, 80, 0x8B4513); 
+        addPart(40, 5, 0, 2, 10, 80, 0x8B4513);
     }
 
     const myAvatar = db[currentUser].avatar; myAvatar.username = currentUser;
-    myPlayer = createR6Rig(myAvatar, hasSword); scene.add(myPlayer.group);
+    myPlayer = createR6Rig(myAvatar, hasSword); 
+    myPlayer.group.position.set(0, 0, 0);
+    scene.add(myPlayer.group);
     
     document.getElementById('chat-messages').innerHTML = '';
     inGame = true; initMultiplayer(); animate();
@@ -501,19 +510,19 @@ function die() {
     ];
     partsData.forEach(p => {
         const mesh = new THREE.Mesh(new THREE.BoxGeometry(...p.size), new THREE.MeshStandardMaterial({color: p.col}));
-        mesh.position.set(pos.x + (Math.random()-0.5)*2, pos.y + Math.random()*2, pos.z + (Math.random()-0.5)*2);
+        mesh.position.set(pos.x + (Math.random()-0.5)*2, pos.y + 2 + Math.random()*2, pos.z + (Math.random()-0.5)*2);
         scene.add(mesh);
         ragdollParts.push({ mesh, vy: Math.random()*0.2 });
     });
 
     setTimeout(() => {
-        isDead = false; myPlayer.group.position.set(0,3,0); myPlayer.group.visible = true; velocityY = 0;
+        isDead = false; myPlayer.group.position.set(0, 0, 0); myPlayer.group.visible = true; velocityY = 0;
         ragdollParts.forEach(p => scene.remove(p.mesh)); ragdollParts = [];
     }, 3000);
 }
 
 // ==========================================
-// CONTROLS & PHYSICS
+// CONTROLS & PHYSICS (FIXED HITBOXES)
 // ==========================================
 const GRAVITY = -0.018; const JUMP_FORCE = 0.38; const SPEED = 0.18;
 let velocityY = 0; let isGrounded = false;
@@ -581,11 +590,17 @@ function performSwing() {
     }
 }
 
-// == (Continuing Controls & Physics Execution) ==
+// Stable and precise player hitbox helper function
+function getPlayerBox(pos) {
+    return new THREE.Box3(
+        new THREE.Vector3(pos.x - 0.7, pos.y, pos.z - 0.7),
+        new THREE.Vector3(pos.x + 0.7, pos.y + 5.2, pos.z + 0.7)
+    );
+}
+
 function updatePlayer(delta) {
     if (!myPlayer || isDead) return;
 
-    // Movement evaluation (WASD + Mobile Joystick)
     let fwd = 0, side = 0;
     if (keys['KeyW'] || keys['ArrowUp']) fwd += 1;
     if (keys['KeyS'] || keys['ArrowDown']) fwd -= 1;
@@ -598,7 +613,6 @@ function updatePlayer(delta) {
     const isMoving = (fwd !== 0 || side !== 0);
     const jumpPressed = keys['Space'] || input.jump;
 
-    // If moving or jumping, cancel dancing
     if ((isMoving || jumpPressed) && myPlayer.isDancing) {
         myPlayer.isDancing = false;
         broadcast({ type: 'dance', id: myId, dancing: false });
@@ -606,13 +620,31 @@ function updatePlayer(delta) {
 
     if (isMoving) {
         const moveAngle = Math.atan2(side, fwd) + camYaw;
-        const speedMultiplier = SPEED;
-        
-        myPlayer.group.position.x += Math.sin(moveAngle) * speedMultiplier;
-        myPlayer.group.position.z += Math.cos(moveAngle) * speedMultiplier;
+        const moveX = Math.sin(moveAngle) * SPEED;
+        const moveZ = Math.cos(moveAngle) * SPEED;
+
         myPlayer.group.rotation.y = moveAngle;
 
-        // Walking audio check
+        // Axis-separated X collision & movement
+        myPlayer.group.position.x += moveX;
+        let boxX = getPlayerBox(myPlayer.group.position);
+        for (let box of platforms) {
+            if (boxX.intersectsBox(box)) {
+                myPlayer.group.position.x -= moveX;
+                break;
+            }
+        }
+
+        // Axis-separated Z collision & movement
+        myPlayer.group.position.z += moveZ;
+        let boxZ = getPlayerBox(myPlayer.group.position);
+        for (let box of platforms) {
+            if (boxZ.intersectsBox(box)) {
+                myPlayer.group.position.z -= moveZ;
+                break;
+            }
+        }
+
         const walkAudio = document.getElementById('snd-walk');
         if (walkAudio.paused && isGrounded) walkAudio.play().catch(()=>{});
 
@@ -626,7 +658,6 @@ function updatePlayer(delta) {
         myPlayer.rArmPivot.rotation.z = 0;
     } else if (myPlayer.isDancing) {
         document.getElementById('snd-walk').pause();
-        // Dancing animation loop
         const t = clock.getElapsedTime() * 10;
         myPlayer.lArmPivot.rotation.x = Math.sin(t) * 1.5;
         myPlayer.rArmPivot.rotation.x = -Math.sin(t) * 1.5;
@@ -636,7 +667,6 @@ function updatePlayer(delta) {
         myPlayer.rLegPivot.rotation.x = -Math.sin(t * 0.5) * 0.3;
     } else {
         document.getElementById('snd-walk').pause();
-        // Reset limbs smoothly
         myPlayer.lArmPivot.rotation.x *= 0.8;
         myPlayer.rArmPivot.rotation.x *= 0.8;
         myPlayer.lLegPivot.rotation.x *= 0.8;
@@ -645,7 +675,6 @@ function updatePlayer(delta) {
         myPlayer.rArmPivot.rotation.z *= 0.8;
     }
 
-    // Jumping & Gravity
     if (jumpPressed && isGrounded) {
         velocityY = JUMP_FORCE;
         isGrounded = false;
@@ -653,36 +682,36 @@ function updatePlayer(delta) {
         document.getElementById('snd-jump').play().catch(()=>{});
     }
 
+    // Vertical Y Collision & Movement
     velocityY += GRAVITY;
     myPlayer.group.position.y += velocityY;
-
-    // Platform & Bounds Collision Checks
-    const pBox = new THREE.Box3().setFromObject(myPlayer.group);
+    
+    let boxY = getPlayerBox(myPlayer.group.position);
     isGrounded = false;
 
     for (let box of platforms) {
-        if (pBox.intersectsBox(box)) {
-            // Check top collision landing
-            if (velocityY <= 0 && myPlayer.group.position.y >= box.max.y - 0.5) {
+        if (boxY.intersectsBox(box)) {
+            if (velocityY <= 0) { // Landing on top
                 myPlayer.group.position.y = box.max.y;
                 velocityY = 0;
                 isGrounded = true;
+            } else if (velocityY > 0) { // Hitting ceiling
+                myPlayer.group.position.y = box.min.y - 5.2;
+                velocityY = 0;
             }
         }
     }
 
     for (let kBox of killParts) {
-        if (pBox.intersectsBox(kBox)) {
+        if (boxY.intersectsBox(kBox)) {
             die();
         }
     }
 
-    // Baseplate Fall Boundary Check
     if (myPlayer.group.position.y < -30) {
         die();
     }
 
-    // Escape Bombs Game logic execution
     if (currentGameType === 'bombs' && Math.random() < 0.08) {
         const bombMesh = new THREE.Mesh(
             new THREE.SphereGeometry(1.2, 8, 8), 
@@ -699,17 +728,17 @@ function updatePlayer(delta) {
         if (b.mesh.position.y < 0) {
             scene.remove(b.mesh);
             bombsArray.splice(i, 1);
-        } else if (myPlayer.group.position.distanceTo(b.mesh.position) < 2) {
+        } else if (boxY.intersectsBox(new THREE.Box3().setFromObject(b.mesh))) {
             die();
         }
     }
 
-    // Camera follow mechanics
+    const camTargetY = myPlayer.group.position.y + 2.5;
     const cx = myPlayer.group.position.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
-    const cy = myPlayer.group.position.y + Math.sin(camPitch) * camDist + 1.5;
+    const cy = camTargetY + Math.sin(camPitch) * camDist;
     const cz = myPlayer.group.position.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
     camera.position.set(cx, cy, cz);
-    camera.lookAt(myPlayer.group.position.x, myPlayer.group.position.y + 1.5, myPlayer.group.position.z);
+    camera.lookAt(myPlayer.group.position.x, camTargetY, myPlayer.group.position.z);
 }
 
 // ==========================================
@@ -744,7 +773,7 @@ function joinDiscovery() {
         }
     });
 
-    setTimeout(joinDiscovery, 5000); // Periodic ping refresh
+    setTimeout(joinDiscovery, 5000);
 }
 
 function setupConnection(conn) {
@@ -840,7 +869,6 @@ function animate() {
     const delta = clock.getDelta();
     updatePlayer(delta);
 
-    // Update animations for other players if they are dancing
     for (let pid in otherPlayers) {
         let op = otherPlayers[pid];
         if (op && op.isDancing) {
@@ -852,7 +880,6 @@ function animate() {
         }
     }
 
-    // Sync position over PeerJS network every ~60ms
     syncTimer += delta;
     if (syncTimer > 0.06 && myPlayer) {
         syncTimer = 0;
