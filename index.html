@@ -356,7 +356,7 @@ function createR6Rig(avatarData, hasSword = false) {
     const matTorsoBase = new THREE.MeshStandardMaterial({ color: cTorso, roughness: 0.4 });
     const matLimbs = new THREE.MeshStandardMaterial({ color: new THREE.Color(avatarData.limbs || '#a4cc70'), roughness: 0.4 });
     
-    // HEAD SETUP (Normal forward-facing orientation)
+    // HEAD SETUP (Uncorrected head orientation rotation restored)
     let headMats = [matSkin, matSkin, matSkin, matSkin, matSkin, matSkin];
     if (avatarData.face) { 
         const faceTex = texLoader.load(avatarData.face); faceTex.magFilter = THREE.NearestFilter; 
@@ -364,14 +364,13 @@ function createR6Rig(avatarData, hasSword = false) {
     }
     const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), headMats); 
     head.position.y = 2.1; 
-    head.rotation.y = 0; // NORMAL FORWARD HEAD
+    head.rotation.y = Math.PI; // Uncorrected head rotation
     head.castShadow = true; 
     group.add(head);
 
     // TORSO SETUP (Images on Front and Back)
     let torsoMats = [matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase];
     
-    // ThreeJS Box Face Order: 0:Right, 1:Left, 2:Top, 3:Bottom, 4:Front(+Z), 5:Back(-Z)
     if (avatarData.frontDecal) {
         const fTex = texLoader.load(avatarData.frontDecal);
         torsoMats[4] = new THREE.MeshStandardMaterial({ color: cTorso, map: fTex });
@@ -415,7 +414,7 @@ function createR6Rig(avatarData, hasSword = false) {
     const ntMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
     ntMesh.position.y = 3.2; ntMesh.scale.set(3, 0.75, 1); group.add(ntMesh);
 
-    return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso, colors: avatarData };
+    return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso, colors: avatarData, isDancing: false };
 }
 
 function addPart(x, y, z, w, h, d, color, isKill = false) {
@@ -574,175 +573,305 @@ camDragZone.addEventListener('touchstart', e => {
 function performSwing() {
     if(isSwinging) return;
     isSwinging = true; broadcast({ type: 'swing', id: myId });
+    setTimeout(() => { isSwinging = false; }, 300);
     for(let pid in otherPlayers) {
         if(otherPlayers[pid].group.position.distanceTo(myPlayer.group.position) < 5) {
             broadcast({ type: 'kill', target: pid });
         }
     }
-    setTimeout(() => isSwinging = false, 500);
+}
+
+// == (Continuing Controls & Physics Execution) ==
+function updatePlayer(delta) {
+    if (!myPlayer || isDead) return;
+
+    // Movement evaluation (WASD + Mobile Joystick)
+    let fwd = 0, side = 0;
+    if (keys['KeyW'] || keys['ArrowUp']) fwd += 1;
+    if (keys['KeyS'] || keys['ArrowDown']) fwd -= 1;
+    if (keys['KeyA'] || keys['ArrowLeft']) side -= 1;
+    if (keys['KeyD'] || keys['ArrowRight']) side += 1;
+    
+    fwd += input.forward; side += input.right;
+    fwd = Math.max(-1, Math.min(1, fwd)); side = Math.max(-1, Math.min(1, side));
+
+    const isMoving = (fwd !== 0 || side !== 0);
+    const jumpPressed = keys['Space'] || input.jump;
+
+    // If moving or jumping, cancel dancing
+    if ((isMoving || jumpPressed) && myPlayer.isDancing) {
+        myPlayer.isDancing = false;
+        broadcast({ type: 'dance', id: myId, dancing: false });
+    }
+
+    if (isMoving) {
+        const moveAngle = Math.atan2(side, fwd) + camYaw;
+        const speedMultiplier = SPEED;
+        
+        myPlayer.group.position.x += Math.sin(moveAngle) * speedMultiplier;
+        myPlayer.group.position.z += Math.cos(moveAngle) * speedMultiplier;
+        myPlayer.group.rotation.y = moveAngle;
+
+        // Walking audio check
+        const walkAudio = document.getElementById('snd-walk');
+        if (walkAudio.paused && isGrounded) walkAudio.play().catch(()=>{});
+
+        // Limbs Animation (Classic R6 Walking Cycle)
+        const t = clock.getElapsedTime() * 12;
+        myPlayer.lArmPivot.rotation.x = Math.sin(t) * 0.8;
+        myPlayer.rArmPivot.rotation.x = -Math.sin(t) * 0.8;
+        myPlayer.lLegPivot.rotation.x = -Math.sin(t) * 0.8;
+        myPlayer.rLegPivot.rotation.x = Math.sin(t) * 0.8;
+        myPlayer.lArmPivot.rotation.z = 0;
+        myPlayer.rArmPivot.rotation.z = 0;
+    } else if (myPlayer.isDancing) {
+        document.getElementById('snd-walk').pause();
+        // Dancing animation loop
+        const t = clock.getElapsedTime() * 10;
+        myPlayer.lArmPivot.rotation.x = Math.sin(t) * 1.5;
+        myPlayer.rArmPivot.rotation.x = -Math.sin(t) * 1.5;
+        myPlayer.lArmPivot.rotation.z = Math.cos(t) * 0.6;
+        myPlayer.rArmPivot.rotation.z = -Math.cos(t) * 0.6;
+        myPlayer.lLegPivot.rotation.x = Math.sin(t * 0.5) * 0.3;
+        myPlayer.rLegPivot.rotation.x = -Math.sin(t * 0.5) * 0.3;
+    } else {
+        document.getElementById('snd-walk').pause();
+        // Reset limbs smoothly
+        myPlayer.lArmPivot.rotation.x *= 0.8;
+        myPlayer.rArmPivot.rotation.x *= 0.8;
+        myPlayer.lLegPivot.rotation.x *= 0.8;
+        myPlayer.rLegPivot.rotation.x *= 0.8;
+        myPlayer.lArmPivot.rotation.z *= 0.8;
+        myPlayer.rArmPivot.rotation.z *= 0.8;
+    }
+
+    // Jumping & Gravity
+    if (jumpPressed && isGrounded) {
+        velocityY = JUMP_FORCE;
+        isGrounded = false;
+        document.getElementById('snd-jump').currentTime = 0;
+        document.getElementById('snd-jump').play().catch(()=>{});
+    }
+
+    velocityY += GRAVITY;
+    myPlayer.group.position.y += velocityY;
+
+    // Platform & Bounds Collision Checks
+    const pBox = new THREE.Box3().setFromObject(myPlayer.group);
+    isGrounded = false;
+
+    for (let box of platforms) {
+        if (pBox.intersectsBox(box)) {
+            // Check top collision landing
+            if (velocityY <= 0 && myPlayer.group.position.y >= box.max.y - 0.5) {
+                myPlayer.group.position.y = box.max.y;
+                velocityY = 0;
+                isGrounded = true;
+            }
+        }
+    }
+
+    for (let kBox of killParts) {
+        if (pBox.intersectsBox(kBox)) {
+            die();
+        }
+    }
+
+    // Baseplate Fall Boundary Check
+    if (myPlayer.group.position.y < -30) {
+        die();
+    }
+
+    // Escape Bombs Game logic execution
+    if (currentGameType === 'bombs' && Math.random() < 0.08) {
+        const bombMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(1.2, 8, 8), 
+            new THREE.MeshStandardMaterial({color: 0x111111})
+        );
+        bombMesh.position.set((Math.random()-0.5)*60, 40, (Math.random()-0.5)*60);
+        scene.add(bombMesh);
+        bombsArray.push({ mesh: bombMesh, vy: -0.4 - Math.random()*0.3 });
+    }
+
+    for (let i = bombsArray.length - 1; i >= 0; i--) {
+        let b = bombsArray[i];
+        b.mesh.position.y += b.vy;
+        if (b.mesh.position.y < 0) {
+            scene.remove(b.mesh);
+            bombsArray.splice(i, 1);
+        } else if (myPlayer.group.position.distanceTo(b.mesh.position) < 2) {
+            die();
+        }
+    }
+
+    // Camera follow mechanics
+    const cx = myPlayer.group.position.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
+    const cy = myPlayer.group.position.y + Math.sin(camPitch) * camDist + 1.5;
+    const cz = myPlayer.group.position.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
+    camera.position.set(cx, cy, cz);
+    camera.lookAt(myPlayer.group.position.x, myPlayer.group.position.y + 1.5, myPlayer.group.position.z);
 }
 
 // ==========================================
-// MULTIPLAYER (PeerJS)
+// MULTIPLAYER SYSTEM (PEERJS)
 // ==========================================
-const chatMsgs = document.getElementById('chat-messages'); const chatInput = document.getElementById('chat-input');
-const mpStatus = document.getElementById('mp-status'); const otherPlayers = {}; const connections = [];
-let myPeer, myId, hostConnection = null;
+let myPeer = null; let myId = null; let connections = {}; let otherPlayers = {};
 
-chatInput.addEventListener('focus', () => isChatFocused = true); chatInput.addEventListener('blur', () => isChatFocused = false);
-function addChat(name, text) { const d = document.createElement('div'); d.innerHTML = `<b>${name}:</b> ${text}`; chatMsgs.appendChild(d); chatMsgs.scrollTop = chatMsgs.scrollHeight; }
-chatInput.addEventListener('keypress', e => {
-    if (e.key === 'Enter' && chatInput.value.trim() !== '') {
-        const msg = chatInput.value.trim(); addChat(currentUser, msg); broadcast({ type: 'chat', user: currentUser, msg: msg });
-        chatInput.value = ''; chatInput.blur();
+function initMultiplayer() {
+    myId = "kyublox_" + currentUser + "_" + Math.floor(Math.random() * 10000);
+    myPeer = new Peer(myId, { host: '0.peerjs.com', port: 443, path: '/' });
+
+    myPeer.on('open', id => {
+        document.getElementById('mp-status').innerText = "Online (Connected)";
+        joinDiscovery();
+    });
+
+    myPeer.on('connection', conn => {
+        setupConnection(conn);
+    });
+}
+
+function joinDiscovery() {
+    let roomList = JSON.parse(localStorage.getItem('kyublox_rooms') || '{}');
+    if (!roomList[currentGameRoom]) roomList[currentGameRoom] = [];
+    if (!roomList[currentGameRoom].includes(myId)) roomList[currentGameRoom].push(myId);
+    localStorage.setItem('kyublox_rooms', JSON.stringify(roomList));
+
+    roomList[currentGameRoom].forEach(peerId => {
+        if (peerId !== myId && !connections[peerId]) {
+            let conn = myPeer.connect(peerId);
+            setupConnection(conn);
+        }
+    });
+
+    setTimeout(joinDiscovery, 5000); // Periodic ping refresh
+}
+
+function setupConnection(conn) {
+    connections[conn.peer] = conn;
+    conn.on('data', data => handlePeerData(conn.peer, data));
+    conn.on('close', () => removePeerPlayer(conn.peer));
+}
+
+function broadcast(data) {
+    for (let id in connections) {
+        if (connections[id].open) connections[id].send(data);
+    }
+}
+
+function handlePeerData(peerId, data) {
+    if (data.type === 'sync') {
+        if (!otherPlayers[data.id]) {
+            otherPlayers[data.id] = createR6Rig(data.avatar, data.hasSword);
+            scene.add(otherPlayers[data.id].group);
+        }
+        let p = otherPlayers[data.id];
+        p.group.position.set(data.x, data.y, data.z);
+        p.group.rotation.y = data.ry;
+        p.lArmPivot.rotation.x = data.lax;
+        p.rArmPivot.rotation.x = data.rax;
+    } else if (data.type === 'chat') {
+        appendChatMessage(data.sender, data.text);
+    } else if (data.type === 'die') {
+        if (otherPlayers[data.id]) otherPlayers[data.id].group.visible = false;
+    } else if (data.type === 'swing') {
+        if (otherPlayers[data.id]) {
+            otherPlayers[data.id].rArmPivot.rotation.x = -Math.PI / 2;
+        }
+    } else if (data.type === 'dance') {
+        if (otherPlayers[data.id]) {
+            otherPlayers[data.id].isDancing = data.dancing;
+        }
+    } else if (data.type === 'kill') {
+        if (data.target === myId) die();
+    }
+}
+
+function removePeerPlayer(peerId) {
+    if (otherPlayers[peerId]) {
+        scene.remove(otherPlayers[peerId].group);
+        delete otherPlayers[peerId];
+    }
+    delete connections[peerId];
+}
+
+// ==========================================
+// CHAT SYSTEM & BROADCAST LOOP
+// ==========================================
+const chatInput = document.getElementById('chat-input');
+chatInput.addEventListener('focus', () => { isChatFocused = true; });
+chatInput.addEventListener('blur', () => { isChatFocused = false; });
+chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        const text = chatInput.value.trim();
+        if (text) {
+            if (text.toLowerCase() === '/e dance') {
+                if (myPlayer) {
+                    myPlayer.isDancing = true;
+                    broadcast({ type: 'dance', id: myId, dancing: true });
+                }
+                appendChatMessage(currentUser, text);
+                chatInput.value = '';
+                chatInput.blur();
+                e.preventDefault();
+                return;
+            }
+            appendChatMessage(currentUser, text);
+            broadcast({ type: 'chat', sender: currentUser, text: text });
+            chatInput.value = '';
+        }
+        chatInput.blur();
     }
 });
 
-function initMultiplayer() {
-    myPeer = new Peer();
-    myPeer.on('open', id => {
-        myId = id; const conn = myPeer.connect(currentGameRoom, { reliable: true }); let connected = false;
-        conn.on('open', () => { connected = true; hostConnection = conn; mpStatus.innerText = "● Live Online Room"; mpStatus.style.color = "#00ff00"; setupConnection(conn); broadcastAvatar(); });
-        setTimeout(() => { if (!connected) { myPeer.destroy(); becomeLobbyHost(); } }, 1500);
-    });
-}
-function becomeLobbyHost() {
-    myPeer = new Peer(currentGameRoom);
-    myPeer.on('open', id => { myId = id; mpStatus.innerText = "● Empty Room (Lobby Host)"; mpStatus.style.color = "#ffff00"; });
-    myPeer.on('connection', newConn => { connections.push(newConn); setupConnection(newConn); mpStatus.innerText = `● Live Online`; mpStatus.style.color = "#00ff00"; broadcastAvatar(); });
+function appendChatMessage(sender, text) {
+    const box = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.innerText = `${sender}: ${text}`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
 }
 
-function setupConnection(c) {
-    c.on('data', data => {
-        if (hostConnection === null) broadcast(data); 
-        if (data.type === 'chat') addChat(data.user, data.msg);
-        if (data.type === 'kill' && data.target === myId) die();
-        if (data.type === 'die' && otherPlayers[data.id]) otherPlayers[data.id].group.visible = false;
-        if (data.type === 'swing' && otherPlayers[data.id]) {
-            otherPlayers[data.id].rArmPivot.rotation.x = Math.PI;
-        }
-        if (data.type === 'avatar' && data.id !== myId) {
-            if (otherPlayers[data.id]) scene.remove(otherPlayers[data.id].group);
-            data.avatar.username = data.user;
-            otherPlayers[data.id] = createR6Rig(data.avatar, currentGameType === 'sfoth');
-            scene.add(otherPlayers[data.id].group);
-        }
-        if (data.type === 'pos' && data.id !== myId && otherPlayers[data.id]) {
-            const target = otherPlayers[data.id]; target.group.visible = !data.isDead;
-            if(!data.isDead) {
-                target.group.position.lerp(new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z), 0.3); target.group.rotation.y = data.rot;
-                animateRig(target, data.animTime, data.isMoving, data.isGrounded, false);
-            }
-        }
-    });
-    c.on('close', () => { if (otherPlayers[c.peer]) { scene.remove(otherPlayers[c.peer].group); delete otherPlayers[c.peer]; } });
-}
-function broadcast(data) {
-    if (!data.id) data.id = myId;
-    if (hostConnection && hostConnection.open) hostConnection.send(data); else connections.forEach(c => { if (c.open && c.peer !== data.id) c.send(data); });
-}
-function broadcastAvatar() { broadcast({ type: 'avatar', id: myId, user: currentUser, avatar: db[currentUser].avatar }); }
-
-// ==========================================
-// GAME LOOP & WASD CONTROLS
-// ==========================================
-let animTime = 0; let lastSync = 0; let bombTimer = 0;
-const wSnd = document.getElementById('snd-walk'); const jSnd = document.getElementById('snd-jump');
-
-function animateRig(rig, t, moving, grounded, localSwinging = false) {
-    if (!grounded) {
-        rig.lArmPivot.rotation.x = THREE.MathUtils.lerp(rig.lArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
-        rig.rArmPivot.rotation.x = localSwinging ? Math.PI/2 : THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -Math.PI * 0.7, 0.2);
-        rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0.3, 0.2); rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, -0.3, 0.2);
-    } else if (moving) {
-        const swing = Math.sin(t * 13) * 0.7;
-        rig.lArmPivot.rotation.x = swing; rig.rArmPivot.rotation.x = localSwinging ? Math.PI/2 : -swing;
-        rig.lLegPivot.rotation.x = -swing; rig.rLegPivot.rotation.x = swing; rig.torso.rotation.z = Math.sin(t * 13) * 0.03;
-    } else {
-        const breath = Math.sin(t * 2.5) * 0.04;
-        rig.lArmPivot.rotation.x = THREE.MathUtils.lerp(rig.lArmPivot.rotation.x, breath, 0.1);
-        rig.rArmPivot.rotation.x = localSwinging ? Math.PI/2 : THREE.MathUtils.lerp(rig.rArmPivot.rotation.x, -breath, 0.1);
-        rig.lLegPivot.rotation.x = THREE.MathUtils.lerp(rig.lLegPivot.rotation.x, 0, 0.1); rig.rLegPivot.rotation.x = THREE.MathUtils.lerp(rig.rLegPivot.rotation.x, 0, 0.1); rig.torso.rotation.z = 0;
-    }
-}
-
+let syncTimer = 0;
 function animate() {
-    if (!inGame) return; requestAnimationFrame(animate);
-    const dt = clock.getDelta(); animTime += dt;
-    
-    ragdollParts.forEach(p => { p.vy += GRAVITY; p.mesh.position.y += p.vy; p.mesh.rotation.x += 0.05; p.mesh.rotation.y += 0.05; });
+    if (!inGame) return;
+    requestAnimationFrame(animate);
 
-    if (currentGameType === 'bombs') {
-        bombTimer += dt;
-        if (bombTimer > 0.5) {
-            bombTimer = 0;
-            const bomb = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 8), new THREE.MeshStandardMaterial({color: 0x222222}));
-            bomb.position.set((Math.random()-0.5)*70, 40, (Math.random()-0.5)*70);
-            scene.add(bomb); bombsArray.push({ mesh: bomb, age: 0 });
-        }
-        for (let i = bombsArray.length - 1; i >= 0; i--) {
-            let b = bombsArray[i]; b.age += dt; b.mesh.position.y -= 15 * dt;
-            if (!isDead && myPlayer.group.position.distanceTo(b.mesh.position) < 3.5) die();
-            if (b.age > 5) { scene.remove(b.mesh); bombsArray.splice(i, 1); }
+    const delta = clock.getDelta();
+    updatePlayer(delta);
+
+    // Update animations for other players if they are dancing
+    for (let pid in otherPlayers) {
+        let op = otherPlayers[pid];
+        if (op && op.isDancing) {
+            const t = clock.getElapsedTime() * 10;
+            op.lArmPivot.rotation.x = Math.sin(t) * 1.5;
+            op.rArmPivot.rotation.x = -Math.sin(t) * 1.5;
+            op.lArmPivot.rotation.z = Math.cos(t) * 0.6;
+            op.rArmPivot.rotation.z = -Math.cos(t) * 0.6;
         }
     }
 
-    if(isDead) { renderer.render(scene, camera); return; }
-
-    let fwd = input.forward, rgt = input.right, jmp = input.jump;
-    if (!isChatFocused) {
-        // CLEAN EXPLICIT CAMERA-RELATIVE WASD CONTROLS
-        let keyFwd = 0, keyRgt = 0;
-        if (keys['KeyW']) keyFwd += 1; // W = Forwards
-        if (keys['KeyS']) keyFwd -= 1; // S = Backwards
-        if (keys['KeyD']) keyRgt += 1; // D = Right
-        if (keys['KeyA']) keyRgt -= 1; // A = Left
-        
-        if (keyFwd !== 0 || keyRgt !== 0) {
-            fwd = keyFwd;
-            rgt = keyRgt;
-        }
-        if (keys['Space']) jmp = true;
+    // Sync position over PeerJS network every ~60ms
+    syncTimer += delta;
+    if (syncTimer > 0.06 && myPlayer) {
+        syncTimer = 0;
+        broadcast({
+            type: 'sync',
+            id: myId,
+            avatar: myPlayer.colors,
+            hasSword: currentGameType === 'sfoth',
+            x: myPlayer.group.position.x,
+            y: myPlayer.group.position.y,
+            z: myPlayer.group.position.z,
+            ry: myPlayer.group.rotation.y,
+            lax: myPlayer.lArmPivot.rotation.x,
+            rax: myPlayer.rArmPivot.rotation.x
+        });
     }
-    const isMoving = Math.abs(fwd) > 0.05 || Math.abs(rgt) > 0.05;
 
-    if (isMoving) {
-        const inputAngle = Math.atan2(rgt, fwd); const moveAngle = camYaw + inputAngle;
-        myPlayer.group.position.x += Math.sin(moveAngle) * SPEED; myPlayer.group.position.z += -Math.cos(moveAngle) * SPEED;
-        const targetRot = moveAngle; let rotDiff = targetRot - myPlayer.group.rotation.y;
-        while (rotDiff > Math.PI) rotDiff -= Math.PI * 2; while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
-        myPlayer.group.rotation.y += rotDiff * 0.25;
-        if(isGrounded && wSnd.paused) wSnd.play().catch(()=>{});
-    } else { wSnd.pause(); }
-
-    if(!isGrounded) wSnd.pause();
-
-    velocityY += GRAVITY; myPlayer.group.position.y += velocityY;
-    const playerBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(myPlayer.group.position.x, myPlayer.group.position.y, myPlayer.group.position.z), new THREE.Vector3(1.8, 3.8, 1.8));
-    
-    isGrounded = false;
-    for (let kp of killParts) if (kp.intersectsBox(playerBox)) { die(); break; }
-    for (let plat of platforms) { if (plat.intersectsBox(playerBox) && velocityY <= 0 && playerBox.min.y > plat.max.y - 1.0) { myPlayer.group.position.y = plat.max.y + 1.9; velocityY = 0; isGrounded = true; } }
-    
-    if (myPlayer.group.position.y < -40) die();
-    
-    if (jmp && isGrounded) { velocityY = JUMP_FORCE; jSnd.currentTime = 0; jSnd.play().catch(()=>{}); }
-    animateRig(myPlayer, animTime, isMoving, isGrounded, isSwinging);
-
-    const camTarget = myPlayer.group.position.clone(); camTarget.y += 1.2;
-    camera.position.x = camTarget.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
-    camera.position.y = camTarget.y + Math.sin(camPitch) * camDist;
-    camera.position.z = camTarget.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
-    camera.lookAt(camTarget);
-
-    if (animTime - lastSync > 0.08) {
-        lastSync = animTime;
-        broadcast({ type: 'pos', pos: myPlayer.group.position, rot: myPlayer.group.rotation.y, animTime, isMoving, isGrounded, isDead });
-    }
     renderer.render(scene, camera);
 }
-
-window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
 </script>
 </body>
 </html>
