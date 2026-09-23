@@ -21,6 +21,7 @@
         .auth-box { flex: 1; min-width: 300px; }
 
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; outline: none; font-size: 16px; background: #fff; color: #333; }
+        input[type="text"], input[type="password"] { user-select: auto; }
         input:focus, select:focus { border-color: #0055ff; }
         button { background: #0055ff; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; border: none; }
         button:hover { background: #0044cc; }
@@ -49,7 +50,7 @@
         
         #chat-container { position: absolute; top: 20px; left: 20px; width: 280px; height: 150px; display: flex; flex-direction: column; pointer-events: auto; }
         #chat-messages { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.5); color: white; padding: 8px; border-radius: 8px 8px 0 0; font-size: 13px; text-shadow: 1px 1px 0 #000; }
-        #chat-input { margin: 0; border-radius: 0 0 8px 8px; padding: 8px; font-size: 13px; background: rgba(0,0,0,0.8); color: white; border: none; }
+        #chat-input { margin: 0; border-radius: 0 0 8px 8px; padding: 8px; font-size: 13px; background: rgba(0,0,0,0.8); color: white; border: none; user-select: auto; }
         
         #mp-status { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); color: white; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; pointer-events: auto; }
 
@@ -79,7 +80,6 @@
 <div id="auth-screen" class="screen active-screen">
     <h1>Welcome to Kyublox</h1>
     <div class="auth-container">
-        <!-- LOG IN -->
         <div class="panel auth-box">
             <h2>Log In</h2>
             <input type="text" id="login-user" placeholder="Username">
@@ -87,7 +87,6 @@
             <button onclick="login()">Log In</button>
             <p id="login-error" style="color: red; font-size: 13px; text-align: center;"></p>
         </div>
-        <!-- SIGN UP -->
         <div class="panel auth-box">
             <h2>Sign Up</h2>
             <input type="text" id="signup-user" placeholder="Choose Username">
@@ -155,10 +154,16 @@
             <div class="face-btn" style="background-image: url('HappyFace.png');" onclick="pickFace('HappyFace.png')"></div>
             <div class="face-btn" style="background-image: url('NerdFace.png');" onclick="pickFace('NerdFace.png')"></div>
         </div>
+        <h3>Clothing Decals (Images)</h3>
+        <input type="text" id="decal-front" placeholder="Front Chest Image URL (e.g. .png/.jpg)">
+        <input type="text" id="decal-back" placeholder="Back Image URL (e.g. .png/.jpg)">
+        
         <h3>Body Colors</h3>
         <div class="color-picker-row"><span>Head:</span> <input type="color" id="col-head"></div>
         <div class="color-picker-row"><span>Torso:</span> <input type="color" id="col-torso"></div>
         <div class="color-picker-row"><span>Limbs:</span> <input type="color" id="col-limbs"></div>
+        
+        <p id="mod-warning" style="color: red; font-size: 13px; text-align: center;"></p>
         <button onclick="saveCustomization()" style="margin-top: 20px;">Save & Return</button>
     </div>
 </div>
@@ -198,7 +203,7 @@ let db = JSON.parse(localStorage.getItem('kyublox_db') || '{}');
 let currentUser = null; let viewingUser = null;
 
 if (!db['OwnerofKyublox']) {
-    db['OwnerofKyublox'] = { pass: 'gylalafan', gender: 'Male', friends: [], avatar: { face: 'NormalFace.png', head: '#f1c27d', torso: '#0055ff', limbs: '#a4cc70' } };
+    db['OwnerofKyublox'] = { pass: 'gylalafan', gender: 'Male', friends: [], avatar: { face: 'NormalFace.png', head: '#f1c27d', torso: '#0055ff', limbs: '#a4cc70', frontDecal: '', backDecal: '' } };
     saveDB();
 }
 
@@ -220,7 +225,7 @@ function signup() {
     if (!user || !pass) return document.getElementById('signup-error').innerText = "Fill all fields.";
     if (db[user]) return document.getElementById('signup-error').innerText = "Username taken.";
     
-    db[user] = { pass: pass, gender: gen, friends: [], avatar: { face: 'NormalFace.png', head: '#f1c27d', torso: '#aaaaaa', limbs: '#aaaaaa' } };
+    db[user] = { pass: pass, gender: gen, friends: [], avatar: { face: 'NormalFace.png', head: '#f1c27d', torso: '#aaaaaa', limbs: '#aaaaaa', frontDecal: '', backDecal: '' } };
     saveDB(); currentUser = user; loadHub();
 }
 
@@ -275,20 +280,50 @@ function viewProfile(user) {
 function addFriend() { db[currentUser].friends.push(viewingUser); saveDB(); alert(`Added ${viewingUser}!`); loadHub(); }
 
 // ==========================================
-// CUSTOMIZATION
+// CUSTOMIZATION & MODERATION
 // ==========================================
 let tempFace = '';
 function pickFace(face) { tempFace = face; document.querySelectorAll('.face-btn').forEach(b => b.classList.remove('selected')); event.target.classList.add('selected'); }
+
 function openCustomize() {
     const av = db[currentUser].avatar;
-    document.getElementById('col-head').value = av.head;
-    document.getElementById('col-torso').value = av.torso;
-    document.getElementById('col-limbs').value = av.limbs;
-    tempFace = av.face;
+    document.getElementById('col-head').value = av.head || '#f1c27d';
+    document.getElementById('col-torso').value = av.torso || '#0055ff';
+    document.getElementById('col-limbs').value = av.limbs || '#a4cc70';
+    document.getElementById('decal-front').value = av.frontDecal || '';
+    document.getElementById('decal-back').value = av.backDecal || '';
+    document.getElementById('mod-warning').innerText = "";
+    tempFace = av.face || 'NormalFace.png';
     showScreen('customize-screen');
 }
+
+function moderateImage(url) {
+    if (!url) return true;
+    const badWords = ['nsfw', 'porn', 'banned', 'offensive', 'badword', 'blood']; // Simulated moderation filter
+    const lowerUrl = url.toLowerCase();
+    for (let word of badWords) {
+        if (lowerUrl.includes(word)) return false;
+    }
+    return true;
+}
+
 function saveCustomization() {
-    db[currentUser].avatar = { head: document.getElementById('col-head').value, torso: document.getElementById('col-torso').value, limbs: document.getElementById('col-limbs').value, face: tempFace || 'NormalFace.png' };
+    const front = document.getElementById('decal-front').value.trim();
+    const back = document.getElementById('decal-back').value.trim();
+
+    if (!moderateImage(front) || !moderateImage(back)) {
+        document.getElementById('mod-warning').innerText = "Error: One or more image URLs were blocked by moderation!";
+        return;
+    }
+
+    db[currentUser].avatar = { 
+        head: document.getElementById('col-head').value, 
+        torso: document.getElementById('col-torso').value, 
+        limbs: document.getElementById('col-limbs').value, 
+        face: tempFace || 'NormalFace.png',
+        frontDecal: front,
+        backDecal: back
+    };
     saveDB(); showScreen('hub-screen');
 }
 
@@ -316,16 +351,40 @@ function initGameEngine() {
 function createR6Rig(avatarData, hasSword = false) {
     const group = new THREE.Group();
     const cHead = new THREE.Color(avatarData.head || '#f1c27d');
+    const cTorso = new THREE.Color(avatarData.torso || '#0055ff');
     const matSkin = new THREE.MeshStandardMaterial({ color: cHead, roughness: 0.4 });
-    const matTorso = new THREE.MeshStandardMaterial({ color: new THREE.Color(avatarData.torso || '#0055ff'), roughness: 0.4 });
+    const matTorsoBase = new THREE.MeshStandardMaterial({ color: cTorso, roughness: 0.4 });
     const matLimbs = new THREE.MeshStandardMaterial({ color: new THREE.Color(avatarData.limbs || '#a4cc70'), roughness: 0.4 });
     
+    // HEAD SETUP (Rotated backwards)
     let headMats = [matSkin, matSkin, matSkin, matSkin, matSkin, matSkin];
-    if (avatarData.face) { const faceTex = texLoader.load(avatarData.face); faceTex.magFilter = THREE.NearestFilter; headMats[4] = new THREE.MeshStandardMaterial({ color: cHead, map: faceTex, transparent: true }); }
+    if (avatarData.face) { 
+        const faceTex = texLoader.load(avatarData.face); faceTex.magFilter = THREE.NearestFilter; 
+        headMats[4] = new THREE.MeshStandardMaterial({ color: cHead, map: faceTex, transparent: true }); 
+    }
+    const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), headMats); 
+    head.position.y = 2.1; 
+    head.rotation.y = Math.PI; // FLIPPED HEAD BACKWARDS AS REQUESTED
+    head.castShadow = true; 
+    group.add(head);
+
+    // TORSO SETUP (Images on Front and Back)
+    let torsoMats = [matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase];
     
-    const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), headMats); head.position.y = 2.1; head.castShadow = true; group.add(head);
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1), matTorso); torso.position.y = 0.5; torso.castShadow = true; group.add(torso);
+    // ThreeJS Box Face Order: 0:Right, 1:Left, 2:Top, 3:Bottom, 4:Front(+Z), 5:Back(-Z)
+    if (avatarData.frontDecal) {
+        const fTex = texLoader.load(avatarData.frontDecal);
+        torsoMats[4] = new THREE.MeshStandardMaterial({ color: cTorso, map: fTex });
+    }
+    if (avatarData.backDecal) {
+        const bTex = texLoader.load(avatarData.backDecal);
+        torsoMats[5] = new THREE.MeshStandardMaterial({ color: cTorso, map: bTex });
+    }
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1), torsoMats); 
+    torso.position.y = 0.5; torso.castShadow = true; group.add(torso);
     
+    // LIMBS
     const lArmPivot = new THREE.Group(); lArmPivot.position.set(-1.5, 1.4, 0);
     const lArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs); lArm.position.y = -0.9; lArm.castShadow = true; lArmPivot.add(lArm); group.add(lArmPivot);
     
@@ -389,7 +448,7 @@ function joinGame(type) {
     
     scene.children = scene.children.filter(c => c.type === 'AmbientLight' || c.type === 'DirectionalLight');
     platforms = []; killParts = []; bombsArray = []; isDead = false;
-    currentGameType = type; currentGameRoom = "kyublox-global-" + type + "-v1";
+    currentGameType = type; currentGameRoom = "kyublox-global-" + type + "-v2";
     
     let hasSword = false;
     document.getElementById('snd-bgm').pause(); document.getElementById('snd-bgm').currentTime = 0;
@@ -402,14 +461,14 @@ function joinGame(type) {
     } else if (type === 'sfoth') {
         hasSword = true;
         addPart(0, -1, 0, 30, 2, 30, 0x333333); addPart(20, 10, 20, 15, 2, 15, 0x228B22);
-        addPart(-25, 20, -10, 20, 2, 20, 0x228B22); addPart(10, 5, 10, 4, 10, 4, 0x555555); // Pillar
+        addPart(-25, 20, -10, 20, 2, 20, 0x228B22); addPart(10, 5, 10, 4, 10, 4, 0x555555);
         document.getElementById('snd-bgm').play().catch(e=>console.log("Audio play blocked"));
     } else if (type === 'neighborhood') {
         addPart(0, -1, 0, 200, 2, 200, 0x33aa33);
         for(let i=0; i<30; i++) buildHouse((i%6)*30 - 75, Math.floor(i/6)*30 - 60);
     } else if (type === 'bombs') {
-        addPart(0, -1, 0, 80, 2, 80, 0x555555); // Arena
-        addPart(0, 5, -40, 80, 10, 2, 0x8B4513); addPart(0, 5, 40, 80, 10, 2, 0x8B4513); // Fence
+        addPart(0, -1, 0, 80, 2, 80, 0x555555); 
+        addPart(0, 5, -40, 80, 10, 2, 0x8B4513); addPart(0, 5, 40, 80, 10, 2, 0x8B4513); 
         addPart(-40, 5, 0, 2, 10, 80, 0x8B4513); addPart(40, 5, 0, 2, 10, 80, 0x8B4513);
     }
 
@@ -435,7 +494,6 @@ function die() {
     isDead = true; document.getElementById('snd-death').currentTime = 0; document.getElementById('snd-death').play();
     myPlayer.group.visible = false; broadcast({ type: 'die', id: myId });
     
-    // Spawn physics ragdoll parts
     const pos = myPlayer.group.position; const colors = myPlayer.colors;
     const partsData = [
         { size: [1.2,1.2,1.2], col: colors.head }, { size: [2,2,1], col: colors.torso },
@@ -510,13 +568,12 @@ window.addEventListener('mousedown', e => {
     if(inGame && currentGameType === 'sfoth' && e.button === 0 && !isChatFocused && !isDead) performSwing();
 });
 camDragZone.addEventListener('touchstart', e => {
-    if(inGame && currentGameType === 'sfoth' && !isDead) performSwing(); // Tap screen to swing on mobile
+    if(inGame && currentGameType === 'sfoth' && !isDead) performSwing(); 
 });
 
 function performSwing() {
     if(isSwinging) return;
     isSwinging = true; broadcast({ type: 'swing', id: myId });
-    // Hit detection (distance based)
     for(let pid in otherPlayers) {
         if(otherPlayers[pid].group.position.distanceTo(myPlayer.group.position) < 5) {
             broadcast({ type: 'kill', target: pid });
@@ -562,7 +619,7 @@ function setupConnection(c) {
         if (data.type === 'kill' && data.target === myId) die();
         if (data.type === 'die' && otherPlayers[data.id]) otherPlayers[data.id].group.visible = false;
         if (data.type === 'swing' && otherPlayers[data.id]) {
-            otherPlayers[data.id].rArmPivot.rotation.x = Math.PI; // Quick visual swing
+            otherPlayers[data.id].rArmPivot.rotation.x = Math.PI;
         }
         if (data.type === 'avatar' && data.id !== myId) {
             if (otherPlayers[data.id]) scene.remove(otherPlayers[data.id].group);
@@ -587,7 +644,7 @@ function broadcast(data) {
 function broadcastAvatar() { broadcast({ type: 'avatar', id: myId, user: currentUser, avatar: db[currentUser].avatar }); }
 
 // ==========================================
-// GAME LOOP
+// GAME LOOP & WASD CONTROLS
 // ==========================================
 let animTime = 0; let lastSync = 0; let bombTimer = 0;
 const wSnd = document.getElementById('snd-walk'); const jSnd = document.getElementById('snd-jump');
@@ -613,10 +670,8 @@ function animate() {
     if (!inGame) return; requestAnimationFrame(animate);
     const dt = clock.getDelta(); animTime += dt;
     
-    // Animate Ragdolls
     ragdollParts.forEach(p => { p.vy += GRAVITY; p.mesh.position.y += p.vy; p.mesh.rotation.x += 0.05; p.mesh.rotation.y += 0.05; });
 
-    // Bombs Game Logic
     if (currentGameType === 'bombs') {
         bombTimer += dt;
         if (bombTimer > 0.5) {
@@ -626,17 +681,22 @@ function animate() {
             scene.add(bomb); bombsArray.push({ mesh: bomb, age: 0 });
         }
         for (let i = bombsArray.length - 1; i >= 0; i--) {
-            let b = bombsArray[i]; b.age += dt; b.mesh.position.y -= 15 * dt; // Fall speed
+            let b = bombsArray[i]; b.age += dt; b.mesh.position.y -= 15 * dt;
             if (!isDead && myPlayer.group.position.distanceTo(b.mesh.position) < 3.5) die();
             if (b.age > 5) { scene.remove(b.mesh); bombsArray.splice(i, 1); }
         }
     }
 
-    if(isDead) { renderer.render(scene, camera); return; } // Pause player control if dead
+    if(isDead) { renderer.render(scene, camera); return; }
 
     let fwd = input.forward, rgt = input.right, jmp = input.jump;
     if (!isChatFocused) {
-        if (keys['KeyW']) fwd += 1; if (keys['KeyS']) fwd -= 1; if (keys['KeyD']) rgt += 1; if (keys['KeyA']) rgt -= 1; if (keys['Space']) jmp = true;
+        // EXPLICIT WASD CAMERA-RELATIVE CONTROLS 
+        if (keys['KeyW']) fwd += 1;  // W = Forwards
+        if (keys['KeyS']) fwd -= 1;  // S = Backwards
+        if (keys['KeyD']) rgt += 1;  // D = Right
+        if (keys['KeyA']) rgt -= 1;  // A = Left
+        if (keys['Space']) jmp = true;
     }
     const isMoving = Math.abs(fwd) > 0.05 || Math.abs(rgt) > 0.05;
 
