@@ -21,14 +21,15 @@
         .auth-box { flex: 1; min-width: 300px; }
 
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; outline: none; font-size: 16px; background: #fff; color: #333; }
-        input[type="text"], input[type="password"] { user-select: auto; }
+        input[type="text"], input[type="password"], input[type="number"] { user-select: auto; }
         input:focus, select:focus { border-color: #0055ff; }
         button { background: #0055ff; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; border: none; }
         button:hover { background: #0044cc; }
         button.danger { background: #ff4444; } button.danger:hover { background: #cc0000; }
+        button.success { background: #28a745; } button.success:hover { background: #218838; }
         
         /* HUB LAYOUT */
-        #hub-layout { display: flex; flex-wrap: wrap; gap: 20px; max-width: 1000px; margin: 0 auto; }
+        #hub-layout { display: flex; flex-wrap: wrap; gap: 20px; max-width: 1200px; margin: 0 auto; }
         .col { flex: 1; min-width: 300px; }
         .list-item { display: flex; justify-content: space-between; background: #f9f9f9; padding: 10px; margin-bottom: 5px; border-radius: 6px; align-items: center; border: 1px solid #eee; }
         
@@ -36,6 +37,7 @@
         .game-card { background: #fff; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; border: 2px solid #e1e4e8; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .game-card:hover { border-color: #0055ff; transform: translateY(-2px); }
         .game-card h3 { color: #333; margin-bottom: 5px; } .game-card p { font-size: 13px; color: #666; margin: 0; }
+        .game-card img { max-width: 100%; border-radius: 8px; margin-top: 10px; max-height: 80px; object-fit: cover; }
 
         /* CUSTOMIZATION */
         .color-picker-row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-weight: bold; }
@@ -53,6 +55,23 @@
         #chat-input { margin: 0; border-radius: 0 0 8px 8px; padding: 8px; font-size: 13px; background: rgba(0,0,0,0.8); color: white; border: none; user-select: auto; }
         
         #mp-status { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); color: white; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; pointer-events: auto; }
+
+        /* HOTBAR / STARTERPACK */
+        #hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; pointer-events: auto; }
+        .hotbar-slot { width: 60px; height: 60px; background: rgba(0,0,0,0.6); border: 2px solid #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer; }
+        .hotbar-slot.equipped { border-color: #00ff00; background: rgba(0,255,0,0.3); }
+
+        /* STUDIO UI */
+        #studio-ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 12; display: none; }
+        .studio-toolbar { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 8px; pointer-events: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .studio-toolbar button { margin: 0; width: auto; padding: 8px 12px; font-size: 13px; }
+        #props-panel { position: absolute; right: 20px; top: 80px; width: 250px; background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; pointer-events: auto; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .prop-row { display: flex; align-items: center; margin-bottom: 5px; gap: 5px; }
+        .prop-row input { margin: 0; padding: 5px; font-size: 12px; }
+        .prop-row label { width: 60px; font-size: 12px; font-weight: bold; }
+        
+        /* PUBLISH / FILE MODALS */
+        .modal-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; z-index: 20; pointer-events:auto; }
 
         /* MOBILE CONTROLS */
         #joystick-zone { position: absolute; bottom: 35px; left: 35px; width: 130px; height: 130px; background: rgba(255,255,255,0.15); border-radius: 50%; pointer-events: auto; display: none; }
@@ -109,12 +128,13 @@
     <h3 id="hub-welcome"></h3>
     <div style="text-align: center; margin-bottom: 20px;">
         <button style="width: auto; padding: 10px 20px;" onclick="openCustomize()">Customize Avatar</button>
+        <button style="width: auto; padding: 10px 20px;" class="success" onclick="openStudio()">Enter Studio</button>
         <button style="width: auto; padding: 10px 20px;" class="danger" onclick="logout()">Logout</button>
     </div>
 
     <div id="hub-layout">
-        <div class="col panel">
-            <h2>Games</h2>
+        <div class="col panel" style="flex: 2;">
+            <h2>Official Games</h2>
             <div class="game-grid">
                 <div class="game-card" onclick="joinGame('baseplate')">
                     <h3>Empty Baseplate</h3><p>A blank canvas.</p>
@@ -131,6 +151,11 @@
                 <div class="game-card" style="border-color:#ff0000;" onclick="joinGame('bombs')">
                     <h3>Escape Bombs</h3><p>Dodge falling bombs!</p>
                 </div>
+            </div>
+
+            <h2 style="margin-top:30px;">User Made Games</h2>
+            <div class="game-grid" id="user-games-list">
+                <!-- User games populated here -->
             </div>
         </div>
 
@@ -179,22 +204,76 @@
     </div>
 </div>
 
+<!-- PUBLISH MODAL -->
+<div id="publish-modal" class="modal-overlay">
+    <div class="panel">
+        <h2>Publish Game</h2>
+        <input type="text" id="pub-name" placeholder="Game Name">
+        <input type="text" id="pub-desc" placeholder="Game Description">
+        <input type="text" id="pub-icon" placeholder="Icon URL (Optional)">
+        <button class="success" onclick="confirmPublish()">Publish to Hub</button>
+        <button class="danger" onclick="document.getElementById('publish-modal').style.display='none'">Cancel</button>
+    </div>
+</div>
+
+<!-- FILE MODAL -->
+<div id="file-modal" class="modal-overlay">
+    <div class="panel">
+        <h2>Manage Studio Files</h2>
+        <select id="file-select"></select>
+        <input type="text" id="file-rename" placeholder="New Name (for rename/save)">
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button onclick="openStudioFile()">Open</button>
+            <button onclick="overwriteStudioFile()" class="success">Save/Overwrite</button>
+            <button onclick="renameStudioFile()">Rename</button>
+        </div>
+        <button class="danger" style="margin-top:10px;" onclick="document.getElementById('file-modal').style.display='none'">Close</button>
+    </div>
+</div>
+
 <!-- GAME UI OVERLAY -->
 <div id="game-ui">
-    <button id="leave-btn" class="danger" onclick="leaveGame()">Leave Game</button>
+    <button id="leave-btn" class="danger" onclick="leaveGame()">Leave</button>
     <div id="chat-container">
         <div id="chat-messages"></div>
         <input type="text" id="chat-input" placeholder="Tap to chat..." autocomplete="off">
     </div>
-    <div id="mp-status">Connecting...</div>
-
+    <div id="mp-status">Singleplayer / Studio</div>
+    <div id="hotbar"><div class="hotbar-slot" id="slot-1" style="display:none;" onclick="toggleSword()">1: Sword</div></div>
+    
     <div id="camera-drag-zone"></div>
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
     <div id="jump-btn">JUMP</div>
 </div>
 
+<!-- STUDIO UI OVERLAY -->
+<div id="studio-ui">
+    <button class="danger" style="position:absolute; top:20px; left:20px; pointer-events:auto;" onclick="leaveStudio()">Exit Studio</button>
+    <div class="studio-toolbar">
+        <button onclick="insertPart('Block')">Block</button>
+        <button onclick="insertPart('Sphere')">Sphere</button>
+        <button onclick="insertPart('Cylinder')">Cylinder</button>
+        <button onclick="insertPart('Wedge')">Wedge</button>
+        <button onclick="insertPart('KillBrick')" style="background:#ff4444;">Kill Brick</button>
+        <button onclick="insertPart('Spawn')" style="background:#ffaa00;">Spawn</button>
+        <button onclick="insertPart('Sword')" style="background:#aaaaaa;">Sword</button>
+        <button onclick="testGame()" class="success">Test</button>
+        <button onclick="showFileModal()">Files</button>
+        <button onclick="showPublishModal()" class="success">Publish</button>
+    </div>
+
+    <div id="props-panel">
+        <h3 style="margin-top:0; color:#333;">Properties</h3>
+        <div class="prop-row"><label>Pos X/Y/Z</label> <input type="number" id="px" step="0.5"><input type="number" id="py" step="0.5"><input type="number" id="pz" step="0.5"></div>
+        <div class="prop-row"><label>Size X/Y/Z</label> <input type="number" id="sx" step="0.5"><input type="number" id="sy" step="0.5"><input type="number" id="sz" step="0.5"></div>
+        <div class="prop-row"><label>Rot X/Y/Z</label> <input type="number" id="rx" step="15"><input type="number" id="ry" step="15"><input type="number" id="rz" step="15"></div>
+        <div class="prop-row"><label>Color</label> <input type="color" id="pcol"></div>
+        <button onclick="applyProps()" style="margin-top:10px;">Apply</button>
+        <button onclick="deleteSelected()" class="danger">Delete Part</button>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <script>
 // ==========================================
 // DATABASE & AUTH SYSTEM
@@ -206,6 +285,8 @@ if (!db['OwnerofKyublox']) {
     db['OwnerofKyublox'] = { pass: 'gylalafan', gender: 'Male', friends: [], avatar: { face: 'NormalFace.png', head: '#f1c27d', torso: '#0055ff', limbs: '#a4cc70', frontDecal: '', backDecal: '' } };
     saveDB();
 }
+if (!db.userGames) db.userGames = {};
+if (!db.studioFiles) db.studioFiles = {};
 
 function saveDB() { localStorage.setItem('kyublox_db', JSON.stringify(db)); }
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen')); document.getElementById(id).classList.add('active-screen'); }
@@ -237,7 +318,7 @@ function logout() { currentUser = null; showScreen('auth-screen'); }
 function loadHub() {
     showScreen('hub-screen');
     document.getElementById('hub-welcome').innerText = `Logged in as: ${currentUser}`;
-    refreshFriends(); updateOnlineStatus();
+    refreshFriends(); updateOnlineStatus(); loadUserGames();
 }
 
 function updateOnlineStatus() {
@@ -278,6 +359,21 @@ function viewProfile(user) {
 }
 
 function addFriend() { db[currentUser].friends.push(viewingUser); saveDB(); alert(`Added ${viewingUser}!`); loadHub(); }
+
+function loadUserGames() {
+    const list = document.getElementById('user-games-list');
+    list.innerHTML = '';
+    for (let gId in db.userGames) {
+        const g = db.userGames[gId];
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.style.borderColor = '#00aa00';
+        card.onclick = () => playUserGame(gId);
+        card.innerHTML = `<h3>${g.name}</h3><p>${g.desc}</p><p style="font-size:10px;color:#aaa;">By ${g.author}</p>`;
+        if(g.icon) card.innerHTML += `<img src="${g.icon}">`;
+        list.appendChild(card);
+    }
+}
 
 // ==========================================
 // CUSTOMIZATION & MODERATION
@@ -321,8 +417,7 @@ function saveCustomization() {
         torso: document.getElementById('col-torso').value, 
         limbs: document.getElementById('col-limbs').value, 
         face: tempFace || 'NormalFace.png',
-        frontDecal: front,
-        backDecal: back
+        frontDecal: front, backDecal: back
     };
     saveDB(); showScreen('hub-screen');
 }
@@ -330,8 +425,9 @@ function saveCustomization() {
 // ==========================================
 // THREE.JS ENGINE & AVATARS
 // ==========================================
-let inGame = false; let currentGameType = ""; let currentGameRoom = "";
-let scene, camera, renderer, clock, myPlayer, killParts, platforms, bombsArray = [];
+let inGame = false; let inStudioMode = false; let isTesting = false;
+let scene, camera, renderer, clock, myPlayer, killParts, platforms, spawnPoint = null, studioParts = [];
+let hasSwordInPack = false; let swordEquipped = false;
 const texLoader = new THREE.TextureLoader();
 
 function initGameEngine() {
@@ -356,20 +452,19 @@ function createR6Rig(avatarData, hasSword = false) {
     const matTorsoBase = new THREE.MeshStandardMaterial({ color: cTorso, roughness: 0.4 });
     const matLimbs = new THREE.MeshStandardMaterial({ color: new THREE.Color(avatarData.limbs || '#a4cc70'), roughness: 0.4 });
     
-    // Rig origin (0,0,0) is at the feet.
-    // Head setup (Y: 3.6 to 4.8)
+    // HEAD SETUP (Backwards as requested)
     let headMats = [matSkin, matSkin, matSkin, matSkin, matSkin, matSkin];
     if (avatarData.face) { 
         const faceTex = texLoader.load(avatarData.face); faceTex.magFilter = THREE.NearestFilter; 
         headMats[4] = new THREE.MeshStandardMaterial({ color: cHead, map: faceTex, transparent: true }); 
     }
     const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), headMats); 
-    head.position.y = 4.2; 
-    head.rotation.y = Math.PI; 
+    head.position.y = 2.1; 
+    head.rotation.y = Math.PI; // BACKWARDS HEAD REQUIREMENT
     head.castShadow = true; 
     group.add(head);
 
-    // Torso setup (Y: 2.0 to 4.0)
+    // TORSO SETUP
     let torsoMats = [matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase, matTorsoBase];
     if (avatarData.frontDecal) {
         const fTex = texLoader.load(avatarData.frontDecal);
@@ -379,62 +474,331 @@ function createR6Rig(avatarData, hasSword = false) {
         const bTex = texLoader.load(avatarData.backDecal);
         torsoMats[5] = new THREE.MeshStandardMaterial({ color: cTorso, map: bTex });
     }
+
     const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 1), torsoMats); 
-    torso.position.y = 3.0; torso.castShadow = true; group.add(torso);
+    torso.position.y = 0.5; torso.castShadow = true; group.add(torso);
     
-    // Limbs pivots and meshes
-    const lArmPivot = new THREE.Group(); lArmPivot.position.set(-1.5, 3.9, 0);
+    // LIMBS
+    const lArmPivot = new THREE.Group(); lArmPivot.position.set(-1.5, 1.4, 0);
     const lArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs); lArm.position.y = -0.9; lArm.castShadow = true; lArmPivot.add(lArm); group.add(lArmPivot);
     
-    const rArmPivot = new THREE.Group(); rArmPivot.position.set(1.5, 3.9, 0);
+    const rArmPivot = new THREE.Group(); rArmPivot.position.set(1.5, 1.4, 0);
     const rArm = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), matLimbs); rArm.position.y = -0.9; rArm.castShadow = true; rArmPivot.add(rArm); group.add(rArmPivot);
     
-    const lLegPivot = new THREE.Group(); lLegPivot.position.set(-0.55, 2.0, 0);
+    const lLegPivot = new THREE.Group(); lLegPivot.position.set(-0.55, -0.5, 0);
     const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs); lLeg.position.y = -0.9; lLeg.castShadow = true; lLegPivot.add(lLeg); group.add(lLegPivot);
     
-    const rLegPivot = new THREE.Group(); rLegPivot.position.set(0.55, 2.0, 0);
+    const rLegPivot = new THREE.Group(); rLegPivot.position.set(0.55, -0.5, 0);
     const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2, 1), matLimbs); rLeg.position.y = -0.9; rLeg.castShadow = true; rLegPivot.add(rLeg); group.add(rLegPivot);
-    
-    group.position.set(0, 0, 0); 
+    group.position.set(0, 3, 0); 
     
     // Sword Tool
-    if (hasSword) {
-        const swordGrp = new THREE.Group();
-        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), new THREE.MeshStandardMaterial({color:0x555555}));
-        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3, 0.1), new THREE.MeshStandardMaterial({color:0xdddddd}));
-        blade.position.y = 2; swordGrp.add(handle); swordGrp.add(blade);
-        swordGrp.position.set(0, -1.5, -0.5); swordGrp.rotation.x = -Math.PI/2;
-        rArmPivot.add(swordGrp);
-    }
+    const swordGrp = new THREE.Group();
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), new THREE.MeshStandardMaterial({color:0x555555}));
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3, 0.1), new THREE.MeshStandardMaterial({color:0xdddddd}));
+    blade.position.y = 2; swordGrp.add(handle); swordGrp.add(blade);
+    swordGrp.position.set(0, -1.5, -0.5); swordGrp.rotation.x = -Math.PI/2;
+    swordGrp.visible = false;
+    rArmPivot.add(swordGrp);
 
     // Nametag
     const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 64;
     const ctx = canvas.getContext('2d'); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,256,64);
     ctx.font = 'bold 30px Arial'; ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.fillText(avatarData.username || 'Player', 128, 42);
     const ntMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
-    ntMesh.position.y = 5.3; ntMesh.scale.set(3, 0.75, 1); group.add(ntMesh);
+    ntMesh.position.y = 3.2; ntMesh.scale.set(3, 0.75, 1); group.add(ntMesh);
 
-    return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso, colors: avatarData, isDancing: false };
+    // Chat Pivot
+    const chatPivot = new THREE.Group();
+    chatPivot.position.y = 4.2;
+    group.add(chatPivot);
+
+    return { group, lArmPivot, rArmPivot, lLegPivot, rLegPivot, torso, colors: avatarData, swordGrp, chatPivot };
 }
 
-function addPart(x, y, z, w, h, d, color, isKill = false) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.5 }));
-    mesh.position.set(x, y, z); mesh.receiveShadow = true; mesh.castShadow = true; scene.add(mesh);
-    const box = new THREE.Box3().setFromObject(mesh);
-    if (isKill) killParts.push(box); else platforms.push(box);
+function showChatBubble(playerObj, text) {
+    if(playerObj.currentBubble) playerObj.chatPivot.remove(playerObj.currentBubble);
+    const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.roundRect(0,0,512,128,20); ctx.fill();
+    ctx.fillStyle = 'black'; ctx.font = 'bold 32px Arial'; ctx.textAlign = 'center'; ctx.fillText(text, 256, 75);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(canvas)}));
+    sprite.scale.set(5, 1.25, 1);
+    playerObj.chatPivot.add(sprite);
+    playerObj.currentBubble = sprite;
+    // Remove exactly after 6 seconds
+    setTimeout(() => {
+        if(playerObj.currentBubble === sprite) {
+            playerObj.chatPivot.remove(sprite);
+            playerObj.currentBubble = null;
+        }
+    }, 6000);
+}
+
+document.getElementById('chat-input').addEventListener('keydown', (e) => {
+    isChatFocused = true;
+    if(e.key === 'Enter') {
+        const txt = e.target.value.trim();
+        if(txt) {
+            const msgs = document.getElementById('chat-messages');
+            msgs.innerHTML += `<div><b>${currentUser}:</b> ${txt}</div>`;
+            msgs.scrollTop = msgs.scrollHeight;
+            if(!inStudioMode || isTesting) showChatBubble(myPlayer, txt);
+        }
+        e.target.value = '';
+        e.target.blur();
+        isChatFocused = false;
+    }
+});
+document.getElementById('chat-input').addEventListener('blur', () => isChatFocused = false);
+document.getElementById('chat-input').addEventListener('focus', () => isChatFocused = true);
+
+
+function addPart(type, x, y, z, w, h, d, color, isKill = false, isSpawn = false) {
+    let geo;
+    if (type === 'Sphere') geo = new THREE.SphereGeometry(w/2, 16, 16);
+    else if (type === 'Cylinder') geo = new THREE.CylinderGeometry(w/2, w/2, h, 16);
+    else if (type === 'Wedge') geo = new THREE.ConeGeometry(w/2, h, 4); // Basic wedge shape
+    else geo = new THREE.BoxGeometry(w, h, d);
+    
+    let matSettings = { color, roughness: 0.5 };
+    if(isSpawn) { matSettings.transparent = true; matSettings.opacity = 0.5; }
+    
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial(matSettings));
+    mesh.position.set(x, y, z);
+    if(type === 'Wedge') mesh.rotation.y = Math.PI/4;
+    mesh.receiveShadow = true; mesh.castShadow = true; 
+    
+    mesh.userData = { type, w, h, d, isKill, isSpawn };
+    scene.add(mesh);
+    
+    if(!inStudioMode || isTesting) {
+        const box = new THREE.Box3().setFromObject(mesh);
+        if (isKill) killParts.push(box); else if(!isSpawn) platforms.push(box);
+    } else {
+        studioParts.push(mesh);
+    }
+    
+    if(isSpawn) spawnPoint = mesh.position.clone();
     return mesh;
 }
 
 function buildHouse(cx, cz) {
-    addPart(cx, 0, cz, 12, 1, 12, 0x8B4513); // Floor
-    addPart(cx, 4, cz-5.5, 12, 8, 1, 0xeeddcc); // Back wall
-    addPart(cx-5.5, 4, cz, 1, 8, 10, 0xeeddcc); // Left wall
-    addPart(cx+5.5, 4, cz, 1, 8, 10, 0xeeddcc); // Right wall
-    addPart(cx-3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); // Front Left wall
-    addPart(cx+3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); // Front Right wall
-    addPart(cx, 6.5, cz+5.5, 2, 3, 1, 0xeeddcc); // Door Top
-    addPart(cx, 8.5, cz, 13, 1, 13, 0x555555); // Roof
+    addPart('Block', cx, 0, cz, 12, 1, 12, 0x8B4513); 
+    addPart('Block', cx, 4, cz-5.5, 12, 8, 1, 0xeeddcc); 
+    addPart('Block', cx-5.5, 4, cz, 1, 8, 10, 0xeeddcc); 
+    addPart('Block', cx+5.5, 4, cz, 1, 8, 10, 0xeeddcc); 
+    addPart('Block', cx-3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); 
+    addPart('Block', cx+3.5, 4, cz+5.5, 5, 8, 1, 0xeeddcc); 
+    addPart('Block', cx, 6.5, cz+5.5, 2, 3, 1, 0xeeddcc); 
+    addPart('Block', cx, 8.5, cz, 13, 1, 13, 0x555555); 
 }
+
+// ==========================================
+// STUDIO SYSTEM
+// ==========================================
+let studioRaycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
+let selectedObject = null;
+
+function openStudio() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+    document.getElementById('studio-ui').style.display = 'block'; 
+    document.getElementById('game-ui').style.display = 'none';
+    renderer.domElement.style.display = 'block';
+    
+    inGame = true; inStudioMode = true; isTesting = false;
+    scene.children = scene.children.filter(c => c.type === 'AmbientLight' || c.type === 'DirectionalLight');
+    studioParts = []; spawnPoint = null;
+    
+    // Default baseplate for studio
+    addPart('Block', 0, -1, 0, 100, 2, 100, 0x33aa33);
+    
+    camera.position.set(0, 10, 20);
+    camera.lookAt(0,0,0);
+    animate();
+}
+
+function leaveStudio() {
+    inGame = false; inStudioMode = false; isTesting = false;
+    document.getElementById('studio-ui').style.display = 'none'; 
+    document.getElementById('game-ui').style.display = 'none'; 
+    renderer.domElement.style.display = 'none';
+    loadHub();
+}
+
+function insertPart(type) {
+    let col = 0xaaaaaa; let isK = false; let isS = false;
+    if(type === 'KillBrick') { type = 'Block'; col = 0xff0000; isK = true; }
+    if(type === 'Spawn') { type = 'Block'; col = 0xffaa00; isS = true; }
+    
+    if(type === 'Sword') {
+        alert("Sword added to StarterPack!");
+        hasSwordInPack = true;
+        return;
+    }
+    
+    // Spawn in front of camera
+    let dist = 10;
+    let dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+    let pos = camera.position.clone().add(dir.multiplyScalar(dist));
+    addPart(type, pos.x, pos.y, pos.z, 4, 4, 4, col, isK, isS);
+}
+
+// Studio Selection
+window.addEventListener('mousedown', (e) => {
+    if (inStudioMode && !isTesting && e.button === 0 && e.target === renderer.domElement) {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        studioRaycaster.setFromCamera(mouse, camera);
+        const intersects = studioRaycaster.intersectObjects(studioParts);
+        if (intersects.length > 0) {
+            if(selectedObject) selectedObject.material.emissive = new THREE.Color(0x000000);
+            selectedObject = intersects[0].object;
+            selectedObject.material.emissive = new THREE.Color(0x333333);
+            updatePropsPanel();
+        } else {
+            if(selectedObject) selectedObject.material.emissive = new THREE.Color(0x000000);
+            selectedObject = null;
+            document.getElementById('props-panel').style.display = 'none';
+        }
+    }
+});
+
+function updatePropsPanel() {
+    if(!selectedObject) return;
+    document.getElementById('props-panel').style.display = 'block';
+    const p = selectedObject.position; const s = selectedObject.scale; const r = selectedObject.rotation;
+    document.getElementById('px').value = p.x.toFixed(2); document.getElementById('py').value = p.y.toFixed(2); document.getElementById('pz').value = p.z.toFixed(2);
+    // Base geometry size multiplied by scale
+    const ud = selectedObject.userData;
+    document.getElementById('sx').value = (ud.w * s.x).toFixed(2); document.getElementById('sy').value = (ud.h * s.y).toFixed(2); document.getElementById('sz').value = (ud.d * s.z).toFixed(2);
+    document.getElementById('rx').value = (r.x * 180 / Math.PI).toFixed(0); document.getElementById('ry').value = (r.y * 180 / Math.PI).toFixed(0); document.getElementById('rz').value = (r.z * 180 / Math.PI).toFixed(0);
+    document.getElementById('pcol').value = "#" + selectedObject.material.color.getHexString();
+}
+
+function applyProps() {
+    if(!selectedObject) return;
+    const px = parseFloat(document.getElementById('px').value); const py = parseFloat(document.getElementById('py').value); const pz = parseFloat(document.getElementById('pz').value);
+    const sx = parseFloat(document.getElementById('sx').value); const sy = parseFloat(document.getElementById('sy').value); const sz = parseFloat(document.getElementById('sz').value);
+    const rx = parseFloat(document.getElementById('rx').value); const ry = parseFloat(document.getElementById('ry').value); const rz = parseFloat(document.getElementById('rz').value);
+    
+    selectedObject.position.set(px, py, pz);
+    const ud = selectedObject.userData;
+    selectedObject.scale.set(sx / ud.w, sy / ud.h, sz / ud.d);
+    selectedObject.rotation.set(rx * Math.PI / 180, ry * Math.PI / 180, rz * Math.PI / 180);
+    selectedObject.material.color.set(document.getElementById('pcol').value);
+}
+
+function deleteSelected() {
+    if(!selectedObject) return;
+    scene.remove(selectedObject);
+    studioParts = studioParts.filter(p => p !== selectedObject);
+    if(selectedObject.userData.isSpawn) spawnPoint = null;
+    selectedObject = null;
+    document.getElementById('props-panel').style.display = 'none';
+}
+
+function testGame() {
+    if(!spawnPoint) { alert("You must place a Spawn block before testing!"); return; }
+    isTesting = true;
+    document.getElementById('studio-ui').style.display = 'none';
+    document.getElementById('game-ui').style.display = 'block';
+    
+    platforms = []; killParts = [];
+    studioParts.forEach(p => {
+        const box = new THREE.Box3().setFromObject(p);
+        if(p.userData.isKill) killParts.push(box);
+        else if(!p.userData.isSpawn) platforms.push(box);
+    });
+    
+    const myAvatar = db[currentUser].avatar; myAvatar.username = currentUser;
+    myPlayer = createR6Rig(myAvatar);
+    scene.add(myPlayer.group);
+    myPlayer.group.position.copy(spawnPoint);
+    myPlayer.group.position.y += 5;
+    
+    document.getElementById('slot-1').style.display = hasSwordInPack ? 'flex' : 'none';
+    swordEquipped = false;
+    
+    // Override leave behavior during test
+    document.getElementById('leave-btn').onclick = stopTesting;
+}
+
+function stopTesting() {
+    isTesting = false;
+    scene.remove(myPlayer.group);
+    myPlayer = null;
+    document.getElementById('game-ui').style.display = 'none';
+    document.getElementById('studio-ui').style.display = 'block';
+    document.getElementById('leave-btn').onclick = leaveGame;
+}
+
+// Studio Files & Publishing
+function showPublishModal() { document.getElementById('publish-modal').style.display = 'flex'; }
+function showFileModal() { 
+    document.getElementById('file-modal').style.display = 'flex'; 
+    const sel = document.getElementById('file-select'); sel.innerHTML = '';
+    for(let fname in db.studioFiles) sel.innerHTML += `<option value="${fname}">${fname}</option>`;
+}
+
+function serializeStudio() {
+    return studioParts.map(p => ({
+        type: p.userData.type, w: p.userData.w, h: p.userData.h, d: p.userData.d,
+        isKill: p.userData.isKill, isSpawn: p.userData.isSpawn,
+        px: p.position.x, py: p.position.y, pz: p.position.z,
+        sx: p.scale.x, sy: p.scale.y, sz: p.scale.z,
+        rx: p.rotation.x, ry: p.rotation.y, rz: p.rotation.z,
+        col: p.material.color.getHex()
+    }));
+}
+
+function loadStudioState(data, swordInfo) {
+    scene.children = scene.children.filter(c => c.type === 'AmbientLight' || c.type === 'DirectionalLight');
+    studioParts = []; spawnPoint = null; hasSwordInPack = swordInfo || false;
+    data.forEach(d => {
+        let p = addPart(d.type, d.px, d.py, d.pz, d.w, d.h, d.d, d.col, d.isKill, d.isSpawn);
+        p.scale.set(d.sx, d.sy, d.sz); p.rotation.set(d.rx, d.ry, d.rz);
+    });
+}
+
+function overwriteStudioFile() {
+    const fname = document.getElementById('file-rename').value || document.getElementById('file-select').value;
+    if(!fname) return alert("Enter a filename.");
+    db.studioFiles[fname] = { parts: serializeStudio(), hasSword: hasSwordInPack };
+    saveDB(); alert("Saved successfully."); showFileModal();
+}
+
+function renameStudioFile() {
+    const oldF = document.getElementById('file-select').value;
+    const newF = document.getElementById('file-rename').value;
+    if(oldF && newF && oldF !== newF) {
+        db.studioFiles[newF] = db.studioFiles[oldF];
+        delete db.studioFiles[oldF]; saveDB(); showFileModal();
+    }
+}
+
+function openStudioFile() {
+    const fname = document.getElementById('file-select').value;
+    if(db.studioFiles[fname]) {
+        loadStudioState(db.studioFiles[fname].parts, db.studioFiles[fname].hasSword);
+        document.getElementById('file-modal').style.display='none';
+    }
+}
+
+function confirmPublish() {
+    if(!spawnPoint) return alert("Must have a Spawn block to publish!");
+    const name = document.getElementById('pub-name').value;
+    const desc = document.getElementById('pub-desc').value;
+    const icon = document.getElementById('pub-icon').value;
+    if(!name) return alert("Name required.");
+    
+    const gId = 'usr_' + Date.now();
+    db.userGames[gId] = { author: currentUser, name, desc, icon, parts: serializeStudio(), hasSword: hasSwordInPack };
+    saveDB(); alert("Published to Hub forever!");
+    document.getElementById('publish-modal').style.display = 'none';
+}
+
 
 // ==========================================
 // GAME STATE
@@ -446,53 +810,70 @@ function joinGame(type) {
     document.getElementById('game-ui').style.display = 'block'; renderer.domElement.style.display = 'block';
     
     scene.children = scene.children.filter(c => c.type === 'AmbientLight' || c.type === 'DirectionalLight');
-    platforms = []; killParts = []; bombsArray = []; isDead = false;
-    currentGameType = type; currentGameRoom = "kyublox-global-" + type + "-v2";
+    platforms = []; killParts = []; isDead = false; inGame = true; inStudioMode = false;
+    hasSwordInPack = false; swordEquipped = false;
+    document.getElementById('slot-1').style.display = 'none';
+    document.getElementById('leave-btn').onclick = leaveGame;
     
-    let hasSword = false;
     document.getElementById('snd-bgm').pause(); document.getElementById('snd-bgm').currentTime = 0;
 
     if (type === 'baseplate') {
-        addPart(0, -1, 0, 100, 2, 100, 0x33aa33);
+        addPart('Block', 0, -1, 0, 100, 2, 100, 0x33aa33);
     } else if (type === 'obby') {
-        addPart(0, -1, 0, 12, 2, 12, 0x33aa33); 
-        addPart(0, 1, -14, 5, 1, 5, 0xffffff);
-        addPart(0, 3, -24, 4, 1, 4, 0xffaa00); 
-        addPart(22, 1, -24, 12, 1, 10, 0xff0000, true); 
-        addPart(36, 7, -24, 6, 1, 6, 0x00ff00);
+        addPart('Block', 0, -1, 0, 12, 2, 12, 0x33aa33); addPart('Block', 0, 1, -14, 5, 1, 5, 0xffffff);
+        addPart('Block', 0, 3, -24, 4, 1, 4, 0xffaa00); addPart('Block', 22, 1, -24, 12, 1, 10, 0xff0000, true); addPart('Block', 36, 7, -24, 6, 1, 6, 0x00ff00);
     } else if (type === 'sfoth') {
-        hasSword = true;
-        addPart(0, -1, 0, 30, 2, 30, 0x333333); 
-        addPart(20, 10, 20, 15, 2, 15, 0x228B22);
-        addPart(-25, 20, -10, 20, 2, 20, 0x228B22); 
-        addPart(10, 5, 10, 4, 10, 4, 0x555555);
+        hasSwordInPack = true;
+        addPart('Block', 0, -1, 0, 30, 2, 30, 0x333333); addPart('Block', 20, 10, 20, 15, 2, 15, 0x228B22);
+        addPart('Block', -25, 20, -10, 20, 2, 20, 0x228B22); addPart('Block', 10, 5, 10, 4, 10, 4, 0x555555);
         document.getElementById('snd-bgm').play().catch(e=>console.log("Audio play blocked"));
     } else if (type === 'neighborhood') {
-        addPart(0, -1, 0, 200, 2, 200, 0x33aa33);
+        addPart('Block', 0, -1, 0, 200, 2, 200, 0x33aa33);
         for(let i=0; i<30; i++) buildHouse((i%6)*30 - 75, Math.floor(i/6)*30 - 60);
     } else if (type === 'bombs') {
-        addPart(0, -1, 0, 80, 2, 80, 0x555555); 
-        addPart(0, 5, -40, 80, 10, 2, 0x8B4513); 
-        addPart(0, 5, 40, 80, 10, 2, 0x8B4513); 
-        addPart(-40, 5, 0, 2, 10, 80, 0x8B4513); 
-        addPart(40, 5, 0, 2, 10, 80, 0x8B4513);
+        addPart('Block', 0, -1, 0, 80, 2, 80, 0x555555); 
+        addPart('Block', 0, 5, -40, 80, 10, 2, 0x8B4513); addPart('Block', 0, 5, 40, 80, 10, 2, 0x8B4513); 
+        addPart('Block', -40, 5, 0, 2, 10, 80, 0x8B4513); addPart('Block', 40, 5, 0, 2, 10, 80, 0x8B4513);
     }
 
     const myAvatar = db[currentUser].avatar; myAvatar.username = currentUser;
-    myPlayer = createR6Rig(myAvatar, hasSword); 
-    myPlayer.group.position.set(0, 0, 0);
-    scene.add(myPlayer.group);
+    myPlayer = createR6Rig(myAvatar); scene.add(myPlayer.group);
     
+    if(hasSwordInPack) document.getElementById('slot-1').style.display = 'flex';
     document.getElementById('chat-messages').innerHTML = '';
-    inGame = true; initMultiplayer(); animate();
+    animate();
+}
+
+function playUserGame(gId) {
+    const g = db.userGames[gId];
+    if(!g) return;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+    document.getElementById('game-ui').style.display = 'block'; renderer.domElement.style.display = 'block';
+    
+    inGame = true; inStudioMode = false; platforms = []; killParts = []; isDead = false;
+    hasSwordInPack = g.hasSword || false; swordEquipped = false;
+    document.getElementById('slot-1').style.display = hasSwordInPack ? 'flex' : 'none';
+    document.getElementById('leave-btn').onclick = leaveGame;
+    
+    loadStudioState(g.parts, g.hasSword);
+    
+    const myAvatar = db[currentUser].avatar; myAvatar.username = currentUser;
+    myPlayer = createR6Rig(myAvatar); scene.add(myPlayer.group);
+    if(spawnPoint) { myPlayer.group.position.copy(spawnPoint); myPlayer.group.position.y += 5; }
+    
+    animate();
+}
+
+function toggleSword() {
+    if(!hasSwordInPack || !myPlayer) return;
+    swordEquipped = !swordEquipped;
+    myPlayer.swordGrp.visible = swordEquipped;
+    document.getElementById('slot-1').className = swordEquipped ? 'hotbar-slot equipped' : 'hotbar-slot';
 }
 
 function leaveGame() {
     inGame = false;
     document.getElementById('game-ui').style.display = 'none'; renderer.domElement.style.display = 'none';
-    if (myPeer) myPeer.destroy();
-    Object.values(otherPlayers).forEach(p => scene.remove(p.group));
-    for (let key in otherPlayers) delete otherPlayers[key];
     document.getElementById('snd-bgm').pause();
     loadHub();
 }
@@ -500,7 +881,7 @@ function leaveGame() {
 function die() {
     if(isDead) return;
     isDead = true; document.getElementById('snd-death').currentTime = 0; document.getElementById('snd-death').play();
-    myPlayer.group.visible = false; broadcast({ type: 'die', id: myId });
+    myPlayer.group.visible = false; 
     
     const pos = myPlayer.group.position; const colors = myPlayer.colors;
     const partsData = [
@@ -510,25 +891,33 @@ function die() {
     ];
     partsData.forEach(p => {
         const mesh = new THREE.Mesh(new THREE.BoxGeometry(...p.size), new THREE.MeshStandardMaterial({color: p.col}));
-        mesh.position.set(pos.x + (Math.random()-0.5)*2, pos.y + 2 + Math.random()*2, pos.z + (Math.random()-0.5)*2);
+        mesh.position.set(pos.x + (Math.random()-0.5)*2, pos.y + Math.random()*2, pos.z + (Math.random()-0.5)*2);
         scene.add(mesh);
         ragdollParts.push({ mesh, vy: Math.random()*0.2 });
     });
 
     setTimeout(() => {
-        isDead = false; myPlayer.group.position.set(0, 0, 0); myPlayer.group.visible = true; velocityY = 0;
+        isDead = false; 
+        if(spawnPoint) myPlayer.group.position.copy(spawnPoint); else myPlayer.group.position.set(0,3,0); 
+        myPlayer.group.position.y += 3;
+        myPlayer.group.visible = true; velocityY = 0;
         ragdollParts.forEach(p => scene.remove(p.mesh)); ragdollParts = [];
     }, 3000);
 }
 
 // ==========================================
-// CONTROLS & PHYSICS (FIXED HITBOXES)
+// CONTROLS & PHYSICS
 // ==========================================
 const GRAVITY = -0.018; const JUMP_FORCE = 0.38; const SPEED = 0.18;
 let velocityY = 0; let isGrounded = false;
 const input = { forward: 0, right: 0, jump: false }; const keys = {}; let isChatFocused = false;
 
-window.addEventListener('keydown', e => { if (!isChatFocused) keys[e.code] = true; });
+window.addEventListener('keydown', e => { 
+    if (!isChatFocused) {
+        keys[e.code] = true; 
+        if(e.code === 'Digit1') toggleSword();
+    }
+});
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 let camDist = 12; let camYaw = 0; let camPitch = 0.2; let isDragging = false; let lastMouseX = 0, lastMouseY = 0;
@@ -567,335 +956,105 @@ camDragZone.addEventListener('touchmove', e => {
         camPitch = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, camPitch)); lastCamTouchX = t.clientX; lastCamTouchY = t.clientY;
     }
 }, { passive: false });
-function resetCamTouch(e) { for(let i=0; i<e.changedTouches.length; i++) if(e.changedTouches[i].identifier === camTouchId) camTouchId = null; }
-camDragZone.addEventListener('touchend', resetCamTouch); camDragZone.addEventListener('touchcancel', resetCamTouch);
+camDragZone.addEventListener('touchend', e => { for(let i=0; i<e.changedTouches.length; i++) if(e.changedTouches[i].identifier === camTouchId) camTouchId = null; });
 
-// Sword Swing Input
-let isSwinging = false;
-window.addEventListener('mousedown', e => {
-    if(inGame && currentGameType === 'sfoth' && e.button === 0 && !isChatFocused && !isDead) performSwing();
-});
-camDragZone.addEventListener('touchstart', e => {
-    if(inGame && currentGameType === 'sfoth' && !isDead) performSwing(); 
+window.addEventListener('resize', () => { 
+    camera.aspect = window.innerWidth / window.innerHeight; 
+    camera.updateProjectionMatrix(); 
+    renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-function performSwing() {
-    if(isSwinging) return;
-    isSwinging = true; broadcast({ type: 'swing', id: myId });
-    setTimeout(() => { isSwinging = false; }, 300);
-    for(let pid in otherPlayers) {
-        if(otherPlayers[pid].group.position.distanceTo(myPlayer.group.position) < 5) {
-            broadcast({ type: 'kill', target: pid });
-        }
-    }
-}
-
-// Stable and precise player hitbox helper function
-function getPlayerBox(pos) {
-    return new THREE.Box3(
-        new THREE.Vector3(pos.x - 0.7, pos.y, pos.z - 0.7),
-        new THREE.Vector3(pos.x + 0.7, pos.y + 5.2, pos.z + 0.7)
-    );
-}
-
-function updatePlayer(delta) {
-    if (!myPlayer || isDead) return;
-
-    let fwd = 0, side = 0;
-    if (keys['KeyW'] || keys['ArrowUp']) fwd += 1;
-    if (keys['KeyS'] || keys['ArrowDown']) fwd -= 1;
-    if (keys['KeyA'] || keys['ArrowLeft']) side -= 1;
-    if (keys['KeyD'] || keys['ArrowRight']) side += 1;
-    
-    fwd += input.forward; side += input.right;
-    fwd = Math.max(-1, Math.min(1, fwd)); side = Math.max(-1, Math.min(1, side));
-
-    const isMoving = (fwd !== 0 || side !== 0);
-    const jumpPressed = keys['Space'] || input.jump;
-
-    if ((isMoving || jumpPressed) && myPlayer.isDancing) {
-        myPlayer.isDancing = false;
-        broadcast({ type: 'dance', id: myId, dancing: false });
-    }
-
-    if (isMoving) {
-        const moveAngle = Math.atan2(side, fwd) + camYaw;
-        const moveX = Math.sin(moveAngle) * SPEED;
-        const moveZ = Math.cos(moveAngle) * SPEED;
-
-        myPlayer.group.rotation.y = moveAngle;
-
-        // Axis-separated X collision & movement
-        myPlayer.group.position.x += moveX;
-        let boxX = getPlayerBox(myPlayer.group.position);
-        for (let box of platforms) {
-            if (boxX.intersectsBox(box)) {
-                myPlayer.group.position.x -= moveX;
-                break;
-            }
-        }
-
-        // Axis-separated Z collision & movement
-        myPlayer.group.position.z += moveZ;
-        let boxZ = getPlayerBox(myPlayer.group.position);
-        for (let box of platforms) {
-            if (boxZ.intersectsBox(box)) {
-                myPlayer.group.position.z -= moveZ;
-                break;
-            }
-        }
-
-        const walkAudio = document.getElementById('snd-walk');
-        if (walkAudio.paused && isGrounded) walkAudio.play().catch(()=>{});
-
-        // Limbs Animation (Classic R6 Walking Cycle)
-        const t = clock.getElapsedTime() * 12;
-        myPlayer.lArmPivot.rotation.x = Math.sin(t) * 0.8;
-        myPlayer.rArmPivot.rotation.x = -Math.sin(t) * 0.8;
-        myPlayer.lLegPivot.rotation.x = -Math.sin(t) * 0.8;
-        myPlayer.rLegPivot.rotation.x = Math.sin(t) * 0.8;
-        myPlayer.lArmPivot.rotation.z = 0;
-        myPlayer.rArmPivot.rotation.z = 0;
-    } else if (myPlayer.isDancing) {
-        document.getElementById('snd-walk').pause();
-        const t = clock.getElapsedTime() * 10;
-        myPlayer.lArmPivot.rotation.x = Math.sin(t) * 1.5;
-        myPlayer.rArmPivot.rotation.x = -Math.sin(t) * 1.5;
-        myPlayer.lArmPivot.rotation.z = Math.cos(t) * 0.6;
-        myPlayer.rArmPivot.rotation.z = -Math.cos(t) * 0.6;
-        myPlayer.lLegPivot.rotation.x = Math.sin(t * 0.5) * 0.3;
-        myPlayer.rLegPivot.rotation.x = -Math.sin(t * 0.5) * 0.3;
-    } else {
-        document.getElementById('snd-walk').pause();
-        myPlayer.lArmPivot.rotation.x *= 0.8;
-        myPlayer.rArmPivot.rotation.x *= 0.8;
-        myPlayer.lLegPivot.rotation.x *= 0.8;
-        myPlayer.rLegPivot.rotation.x *= 0.8;
-        myPlayer.lArmPivot.rotation.z *= 0.8;
-        myPlayer.rArmPivot.rotation.z *= 0.8;
-    }
-
-    if (jumpPressed && isGrounded) {
-        velocityY = JUMP_FORCE;
-        isGrounded = false;
-        document.getElementById('snd-jump').currentTime = 0;
-        document.getElementById('snd-jump').play().catch(()=>{});
-    }
-
-    // Vertical Y Collision & Movement
-    velocityY += GRAVITY;
-    myPlayer.group.position.y += velocityY;
-    
-    let boxY = getPlayerBox(myPlayer.group.position);
-    isGrounded = false;
-
-    for (let box of platforms) {
-        if (boxY.intersectsBox(box)) {
-            if (velocityY <= 0) { // Landing on top
-                myPlayer.group.position.y = box.max.y;
-                velocityY = 0;
-                isGrounded = true;
-            } else if (velocityY > 0) { // Hitting ceiling
-                myPlayer.group.position.y = box.min.y - 5.2;
-                velocityY = 0;
-            }
-        }
-    }
-
-    for (let kBox of killParts) {
-        if (boxY.intersectsBox(kBox)) {
-            die();
-        }
-    }
-
-    if (myPlayer.group.position.y < -30) {
-        die();
-    }
-
-    if (currentGameType === 'bombs' && Math.random() < 0.08) {
-        const bombMesh = new THREE.Mesh(
-            new THREE.SphereGeometry(1.2, 8, 8), 
-            new THREE.MeshStandardMaterial({color: 0x111111})
-        );
-        bombMesh.position.set((Math.random()-0.5)*60, 40, (Math.random()-0.5)*60);
-        scene.add(bombMesh);
-        bombsArray.push({ mesh: bombMesh, vy: -0.4 - Math.random()*0.3 });
-    }
-
-    for (let i = bombsArray.length - 1; i >= 0; i--) {
-        let b = bombsArray[i];
-        b.mesh.position.y += b.vy;
-        if (b.mesh.position.y < 0) {
-            scene.remove(b.mesh);
-            bombsArray.splice(i, 1);
-        } else if (boxY.intersectsBox(new THREE.Box3().setFromObject(b.mesh))) {
-            die();
-        }
-    }
-
-    const camTargetY = myPlayer.group.position.y + 2.5;
-    const cx = myPlayer.group.position.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
-    const cy = camTargetY + Math.sin(camPitch) * camDist;
-    const cz = myPlayer.group.position.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
-    camera.position.set(cx, cy, cz);
-    camera.lookAt(myPlayer.group.position.x, camTargetY, myPlayer.group.position.z);
-}
-
-// ==========================================
-// MULTIPLAYER SYSTEM (PEERJS)
-// ==========================================
-let myPeer = null; let myId = null; let connections = {}; let otherPlayers = {};
-
-function initMultiplayer() {
-    myId = "kyublox_" + currentUser + "_" + Math.floor(Math.random() * 10000);
-    myPeer = new Peer(myId, { host: '0.peerjs.com', port: 443, path: '/' });
-
-    myPeer.on('open', id => {
-        document.getElementById('mp-status').innerText = "Online (Connected)";
-        joinDiscovery();
-    });
-
-    myPeer.on('connection', conn => {
-        setupConnection(conn);
-    });
-}
-
-function joinDiscovery() {
-    let roomList = JSON.parse(localStorage.getItem('kyublox_rooms') || '{}');
-    if (!roomList[currentGameRoom]) roomList[currentGameRoom] = [];
-    if (!roomList[currentGameRoom].includes(myId)) roomList[currentGameRoom].push(myId);
-    localStorage.setItem('kyublox_rooms', JSON.stringify(roomList));
-
-    roomList[currentGameRoom].forEach(peerId => {
-        if (peerId !== myId && !connections[peerId]) {
-            let conn = myPeer.connect(peerId);
-            setupConnection(conn);
-        }
-    });
-
-    setTimeout(joinDiscovery, 5000);
-}
-
-function setupConnection(conn) {
-    connections[conn.peer] = conn;
-    conn.on('data', data => handlePeerData(conn.peer, data));
-    conn.on('close', () => removePeerPlayer(conn.peer));
-}
-
-function broadcast(data) {
-    for (let id in connections) {
-        if (connections[id].open) connections[id].send(data);
-    }
-}
-
-function handlePeerData(peerId, data) {
-    if (data.type === 'sync') {
-        if (!otherPlayers[data.id]) {
-            otherPlayers[data.id] = createR6Rig(data.avatar, data.hasSword);
-            scene.add(otherPlayers[data.id].group);
-        }
-        let p = otherPlayers[data.id];
-        p.group.position.set(data.x, data.y, data.z);
-        p.group.rotation.y = data.ry;
-        p.lArmPivot.rotation.x = data.lax;
-        p.rArmPivot.rotation.x = data.rax;
-    } else if (data.type === 'chat') {
-        appendChatMessage(data.sender, data.text);
-    } else if (data.type === 'die') {
-        if (otherPlayers[data.id]) otherPlayers[data.id].group.visible = false;
-    } else if (data.type === 'swing') {
-        if (otherPlayers[data.id]) {
-            otherPlayers[data.id].rArmPivot.rotation.x = -Math.PI / 2;
-        }
-    } else if (data.type === 'dance') {
-        if (otherPlayers[data.id]) {
-            otherPlayers[data.id].isDancing = data.dancing;
-        }
-    } else if (data.type === 'kill') {
-        if (data.target === myId) die();
-    }
-}
-
-function removePeerPlayer(peerId) {
-    if (otherPlayers[peerId]) {
-        scene.remove(otherPlayers[peerId].group);
-        delete otherPlayers[peerId];
-    }
-    delete connections[peerId];
-}
-
-// ==========================================
-// CHAT SYSTEM & BROADCAST LOOP
-// ==========================================
-const chatInput = document.getElementById('chat-input');
-chatInput.addEventListener('focus', () => { isChatFocused = true; });
-chatInput.addEventListener('blur', () => { isChatFocused = false; });
-chatInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-        const text = chatInput.value.trim();
-        if (text) {
-            if (text.toLowerCase() === '/e dance') {
-                if (myPlayer) {
-                    myPlayer.isDancing = true;
-                    broadcast({ type: 'dance', id: myId, dancing: true });
-                }
-                appendChatMessage(currentUser, text);
-                chatInput.value = '';
-                chatInput.blur();
-                e.preventDefault();
-                return;
-            }
-            appendChatMessage(currentUser, text);
-            broadcast({ type: 'chat', sender: currentUser, text: text });
-            chatInput.value = '';
-        }
-        chatInput.blur();
-    }
-});
-
-function appendChatMessage(sender, text) {
-    const box = document.getElementById('chat-messages');
-    const div = document.createElement('div');
-    div.innerText = `${sender}: ${text}`;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-}
-
-let syncTimer = 0;
+// Main Render Loop
 function animate() {
     if (!inGame) return;
     requestAnimationFrame(animate);
+    const dt = clock.getDelta(); const time = clock.getElapsedTime();
 
-    const delta = clock.getDelta();
-    updatePlayer(delta);
+    if (inStudioMode && !isTesting) {
+        // Studio Freecam (WASD)
+        let f = 0, r = 0;
+        if(keys['KeyW']) f = 1; if(keys['KeyS']) f = -1;
+        if(keys['KeyA']) r = -1; if(keys['KeyD']) r = 1;
+        if(keys['Space']) camera.position.y += 0.5;
+        if(keys['ShiftLeft']) camera.position.y -= 0.5;
+        
+        const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+        dir.y = 0; dir.normalize();
+        const right = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
+        right.y = 0; right.normalize();
+        
+        camera.position.add(dir.multiplyScalar(f * 0.5));
+        camera.position.add(right.multiplyScalar(r * 0.5));
+        
+        // Right click Look
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        euler.y = camYaw; euler.x = -camPitch;
+        camera.quaternion.setFromEuler(euler);
 
-    for (let pid in otherPlayers) {
-        let op = otherPlayers[pid];
-        if (op && op.isDancing) {
-            const t = clock.getElapsedTime() * 10;
-            op.lArmPivot.rotation.x = Math.sin(t) * 1.5;
-            op.rArmPivot.rotation.x = -Math.sin(t) * 1.5;
-            op.lArmPivot.rotation.z = Math.cos(t) * 0.6;
-            op.rArmPivot.rotation.z = -Math.cos(t) * 0.6;
+    } else if (myPlayer && !isDead) {
+        // Regular Gameplay Physics & Logic
+        let f = input.forward; let r = input.right;
+        if (keys['KeyW']) f = 1; if (keys['KeyS']) f = -1;
+        if (keys['KeyA']) r = -1; if (keys['KeyD']) r = 1;
+        
+        const dir = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw));
+        const right = new THREE.Vector3(Math.sin(camYaw - Math.PI/2), 0, Math.cos(camYaw - Math.PI/2));
+        const moveVec = dir.multiplyScalar(-f).add(right.multiplyScalar(r)).normalize().multiplyScalar(SPEED);
+        
+        myPlayer.group.position.x += moveVec.x; myPlayer.group.position.z += moveVec.z;
+        
+        // Animation
+        if (moveVec.length() > 0) {
+            myPlayer.group.rotation.y = Math.atan2(-moveVec.x, -moveVec.z);
+            myPlayer.lArmPivot.rotation.x = Math.sin(time * 10) * 0.5;
+            myPlayer.rArmPivot.rotation.x = -Math.sin(time * 10) * 0.5;
+            myPlayer.lLegPivot.rotation.x = -Math.sin(time * 10) * 0.5;
+            myPlayer.rLegPivot.rotation.x = Math.sin(time * 10) * 0.5;
+            document.getElementById('snd-walk').play().catch(()=>{});
+        } else {
+            myPlayer.lArmPivot.rotation.x = 0; myPlayer.rArmPivot.rotation.x = 0;
+            myPlayer.lLegPivot.rotation.x = 0; myPlayer.rLegPivot.rotation.x = 0;
+            document.getElementById('snd-walk').pause();
         }
-    }
 
-    syncTimer += delta;
-    if (syncTimer > 0.06 && myPlayer) {
-        syncTimer = 0;
-        broadcast({
-            type: 'sync',
-            id: myId,
-            avatar: myPlayer.colors,
-            hasSword: currentGameType === 'sfoth',
-            x: myPlayer.group.position.x,
-            y: myPlayer.group.position.y,
-            z: myPlayer.group.position.z,
-            ry: myPlayer.group.rotation.y,
-            lax: myPlayer.lArmPivot.rotation.x,
-            rax: myPlayer.rArmPivot.rotation.x
-        });
+        if(swordEquipped) myPlayer.rArmPivot.rotation.x = Math.PI / 2;
+        
+        // Jumping & Collision
+        if ((keys['Space'] || input.jump) && isGrounded) { velocityY = JUMP_FORCE; isGrounded = false; document.getElementById('snd-jump').play().catch(()=>{}); }
+        velocityY += GRAVITY; myPlayer.group.position.y += velocityY;
+        
+        const myBox = new THREE.Box3().setFromObject(myPlayer.torso);
+        isGrounded = false;
+        
+        for (let pBox of platforms) {
+            if (myBox.intersectsBox(pBox)) {
+                if (velocityY < 0 && myPlayer.group.position.y - velocityY >= pBox.max.y) {
+                    myPlayer.group.position.y = pBox.max.y + 1.5;
+                    velocityY = 0; isGrounded = true;
+                } else if (velocityY > 0 && myPlayer.group.position.y - velocityY <= pBox.min.y) {
+                    myPlayer.group.position.y = pBox.min.y - 1.5; velocityY = 0;
+                }
+            }
+        }
+        for (let kBox of killParts) if (myBox.intersectsBox(kBox)) die();
+        if (myPlayer.group.position.y < -50) die();
+        
+        // Camera Follow
+        const target = myPlayer.group.position.clone();
+        camera.position.x = target.x + camDist * Math.sin(camYaw) * Math.cos(camPitch);
+        camera.position.y = target.y + camDist * Math.sin(camPitch);
+        camera.position.z = target.z + camDist * Math.cos(camYaw) * Math.cos(camPitch);
+        camera.lookAt(target);
     }
+    
+    // Ragdoll Physics
+    ragdollParts.forEach(p => {
+        p.vy += GRAVITY; p.mesh.position.y += p.vy;
+        let isColliding = false; const box = new THREE.Box3().setFromObject(p.mesh);
+        platforms.forEach(plat => { if(box.intersectsBox(plat) && p.vy < 0) isColliding = true; });
+        if(isColliding) { p.mesh.position.y -= p.vy; p.vy = 0; }
+        else { p.mesh.rotation.x += 0.1; p.mesh.rotation.z += 0.1; }
+    });
 
     renderer.render(scene, camera);
 }
